@@ -1,11 +1,5 @@
 module Javalyzer.Main(main) where
 
-{-import Control.Monad (forM, liftM, mapM)
-import Data.List as L
-import System.Directory
-import System.FilePath ((</>))
-import System.IO-}
-
 import Javalyzer.FileManipulation
 
 --projectDir = "/Users/dillon/javaTestProjects/main/applemenu/src/com/apple/eawt/"
