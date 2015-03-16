@@ -15,11 +15,6 @@ projectDir = "/Users/dillon/javaTestProjects/main/ant.debugger/src/org/netbeans/
 
 main :: IO ()
 main = do
-  projDirCon <-getRecursiveContents projectDir
-  putStrLn $ show $ projDirCon
   source <- allFilesWithExtensions javaExtensions projectDir
---  putStrLn $ show source
-  res <- mapM (applyToFileContents (\x -> if length x > 10 then 1 else 0)) source
+  res <- mapM (applyToFileContents (\x -> if length x > 100000 then 1 else 0)) source
   putStrLn $ show res
---  res <- liftM L.concat res
---  putStrLn $ show $ res
