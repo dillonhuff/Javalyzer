@@ -18,5 +18,5 @@ emptyMethodClassDecl =
 
 
 testCases =
-  [("EmptyClass.java", Right $ jCompUnit Nothing [] [emptyClassDecl]),
-   ("EmptyMethod.java", Right $ jCompUnit Nothing [] [emptyMethodClassDecl])]
+  [("EmptyClass.java", return $ jCompUnit Nothing [] [emptyClassDecl]),
+   ("EmptyMethod.java", return $ jCompUnit Nothing [] [emptyMethodClassDecl])]
