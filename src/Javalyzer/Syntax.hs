@@ -1,5 +1,6 @@
 module Javalyzer.Syntax(JParseError,
                         JCompilationUnit,
+                        JTypeDecl,
                         compUnitToJ,
                         jCompUnit,
                         jClassTypeDecl,
@@ -8,12 +9,24 @@ module Javalyzer.Syntax(JParseError,
                         jMethodDecl,
                         jBlockMethod,
                         jBlockStmt,
+                        jLocalVars,
                         jBlock,
                         jReturnVoid,
+                        jExpStmt,
                         jClassRefType,
                         jClassType,
+                        jAssign,
+                        jLit,
+                        jNull,
+                        jEqualA,
+                        jRefType,
+                        jVarId,
+                        jVarDecl,
+                        jNameLhs,
                         jIdent,
+                        jName,
                         jPublic,
+                        jPrivate,
                         jParseError) where
 
 import Control.Monad
@@ -126,35 +139,123 @@ data JBlock = JBlock [JBlockStmt]
 
 jBlock stmts = JBlock stmts
 
-data JBlockStmt = JBlockStmt JStmt
-                   deriving (Eq, Ord, Show)
+data JBlockStmt
+  = JBlockStmt JStmt
+  | JLocalVars [JModifier] JType [JVarDecl]
+    deriving (Eq, Ord, Show)
 
-jBlockStmt stmt = JBlockStmt stmt
+jBlockStmt = JBlockStmt
+jLocalVars = JLocalVars
 
 blockStmtToJ :: BlockStmt -> JError JBlockStmt
 blockStmtToJ (BlockStmt stmt) = do
   stmtJ <- stmtToJ stmt
   return $ JBlockStmt stmtJ
+blockStmtToJ (LocalVars mods tp decls) = do
+  modsJ <- mapM modifierToJ mods
+  tpJ <- typeToJ tp
+  declsJ <- mapM varDeclToJ decls
+  return $ jLocalVars modsJ tpJ declsJ
+blockStmtToJ other = fail $ (show other) ++ " is not supported by blockStmtToJ"
 
-data JStmt = JReturn (Maybe JExp)
-             deriving (Eq, Ord, Show)
+data JStmt
+  = JReturn (Maybe JExp)
+  | JExpStmt JExp
+    deriving (Eq, Ord, Show)
 
 jReturnVoid = JReturn Nothing
+jExpStmt = JExpStmt
 
 stmtToJ :: Stmt -> JError JStmt
 stmtToJ (Return Nothing) = return jReturnVoid
+stmtToJ (ExpStmt exp) = do
+  expJ <- expToJ exp
+  return $ jExpStmt expJ
+stmtToJ other = fail $ (show other) ++ " is not supported by stmtToJ"
 
-data JExp = JExp
-            deriving (Eq, Ord, Show)
+data JExp
+  = JLit JLiteral
+  | JAssign JLhs JAssignOp JExp
+    deriving (Eq, Ord, Show)
 
-data JModifier = JPublic
-                 deriving (Eq, Ord, Show)
+jLit = JLit
+jAssign = JAssign
+
+expToJ (Lit l) = do
+  lJ <- literalToJ l
+  return $ jLit lJ
+expToJ (Assign lhs asgOp exp) = do
+  lhsJ <- lhsToJ lhs
+  asgOpJ <- assignOpToJ asgOp
+  expJ <- expToJ exp
+  return $ jAssign lhsJ asgOpJ expJ
+expToJ other = fail $ (show other) ++ " is not supported by expToJ"
+
+data JLiteral
+  = JNull
+    deriving (Eq, Ord, Show)
+
+jNull = JNull
+
+literalToJ Null = return jNull
+literalToJ other = fail $ (show other) ++ " is not supported by literalToJ"
+
+data JAssignOp
+  = JEqualA
+    deriving (Eq, Ord, Show)
+
+jEqualA = JEqualA
+
+assignOpToJ EqualA = return jEqualA
+assignOpToJ other = fail $ (show other) ++ " is not supported by assignOpToJ"
+
+data JVarDecl = JVarDecl JVarDeclId (Maybe JVarInit)
+                deriving (Eq, Ord, Show)
+
+jVarDecl = JVarDecl
+
+varDeclToJ (VarDecl vid Nothing) = do
+  vidJ <- varDeclIdToJ vid
+  return $ jVarDecl vidJ Nothing
+varDeclToJ other = fail $ (show other) ++ " is not suported by varDeclToJ"
+
+data JVarDeclId
+  = JVarId JIdent
+    deriving (Eq, Ord, Show)
+
+jVarId = JVarId
+
+varDeclIdToJ (VarId id) = do
+  idJ <- identToJ id
+  return $ jVarId idJ
+varDeclIdToJ other = fail $ (show other) ++ " is not supported by varDeclIdToJ"
+
+data JVarInit
+  = JInitExp JExp
+    deriving (Eq, Ord, Show)
+
+data JModifier
+  = JPublic
+  | JPrivate
+    deriving (Eq, Ord, Show)
 
 jPublic = JPublic
+jPrivate = JPrivate
 
 modifierToJ :: Modifier -> JError JModifier
-modifierToJ Public = return JPublic
+modifierToJ Public = return jPublic
+modifierToJ Private = return jPrivate
 modifierToJ m = fail $ show m ++ " is not a supported modifier"
+
+data JLhs = JNameLhs JName
+            deriving (Eq, Ord, Show)
+
+jNameLhs = JNameLhs
+
+lhsToJ (NameLhs id) = do
+  idJ <- nameToJ id
+  return $ jNameLhs idJ
+lhsToJ other = fail $ (show other) ++ " is not supported by lhsToJ"
 
 data JIdent = JIdent String
               deriving (Eq, Ord, Show)
@@ -164,10 +265,26 @@ jIdent = JIdent
 identToJ :: Ident -> JError JIdent
 identToJ (Ident n) = return $ jIdent n
 
+data JName = JName [JIdent]
+             deriving (Eq, Ord, Show)
+
+jName = JName
+
+nameToJ (Name ids) = do
+  idsJ <- mapM identToJ ids
+  return $ jName idsJ
+--nameToJ other = fail $ (show other) ++ " is not supported by nameToJ"
+
 data JType
   = JPrimType
-  | JRefType
+  | JRefType JRefType
     deriving (Eq, Ord, Show)
+
+jRefType = JRefType
+
+typeToJ (RefType rt) = do
+  rtJ <- refTypeToJ rt
+  return $ jRefType rtJ
 
 returnTypeToJ Nothing = return $ Nothing
 
@@ -187,14 +304,13 @@ formalParamToJ fp = return JFP
 data JRefType = JClassRefType JClassType
                 deriving (Eq, Ord, Show)
 
-jRefType = JClassRefType
 jClassRefType = JClassRefType
 
 refTypeToJ :: RefType -> JError JRefType
 refTypeToJ (ClassRefType (ClassType idTypeArgList)) = do
   idTypeArgListJ <- idTypeArgListToJ idTypeArgList
   return $ jClassRefType $ jClassType idTypeArgListJ
-refTypeToJ other = fail $ "refTypeToJ not implemented for " ++ show other
+refTypeToJ other = fail $ "refTypeToJ not implemented for " ++ (show other)
 
 idTypeArgListToJ :: [(Ident, [TypeArgument])] -> JError [(JIdent, [JTypeArgument])]
 idTypeArgListToJ ls = 

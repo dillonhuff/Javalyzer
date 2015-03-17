@@ -1,8 +1,4 @@
-module Javalyzer.Parser(parseCompilationUnit,
-                        jCompUnit,
-                        jClassTypeDecl,
-                        jClassBody,
-                        jIdent) where
+module Javalyzer.Parser(parseCompilationUnit) where
 
 import Data.List as L
 import Language.Java.Parser
