@@ -1,10 +1,19 @@
 module Javalyzer.Syntax(JParseError,
                         JCompilationUnit,
-                        jCompUnit,
                         compUnitToJ,
+                        jCompUnit,
                         jClassTypeDecl,
                         jClassBody,
+                        jMemberDecl,
+                        jMethodDecl,
+                        jBlockMethod,
+                        jBlockStmt,
+                        jBlock,
+                        jReturnVoid,
+                        jClassRefType,
+                        jClassType,
                         jIdent,
+                        jPublic,
                         jParseError) where
 
 import Data.List as L
@@ -55,15 +64,65 @@ jClassBody = JClassBody
 
 classBodyToJ (ClassBody decls) = jClassBody $ L.map declToJ decls
 
-data JDecl = JDecl
+data JDecl = JMemberDecl JMemberDecl
              deriving (Eq, Ord, Show)
 
-declToJ dec = JDecl
+jMemberDecl = JMemberDecl
 
-data JModifier = JModifier
+declToJ (MemberDecl (MethodDecl mods tps retType id fparams exceptions body)) =
+  jMemberDecl $ jMethodDecl modsJ tpsJ retTypeJ idJ fparamsJ exceptionsJ bodyJ
+  where
+    modsJ = L.map modifierToJ mods
+    tpsJ = L.map typeParamToJ tps
+    retTypeJ = returnTypeToJ retType
+    idJ = identToJ id
+    fparamsJ = L.map formalParamToJ fparams
+    exceptionsJ = L.map exceptionTypeToJ exceptions
+    bodyJ = methodBodyToJ body
+
+data JMemberDecl
+  = JMethodDecl [JModifier] [JTypeParam] (Maybe JType) JIdent [JFormalParam] [JExceptionType] JMethodBody
+    deriving (Eq, Ord, Show)
+
+jMethodDecl = JMethodDecl
+
+data JMethodBody = JMethodBody (Maybe JBlock)
+                   deriving (Eq, Ord, Show)
+
+jBlockMethod block = JMethodBody $ Just block
+
+methodBodyToJ (MethodBody Nothing) = JMethodBody Nothing
+methodBodyToJ (MethodBody (Just (Block stmts))) =
+  jBlockMethod $ jBlock $ L.map blockStmtToJ stmts
+
+data JBlock = JBlock [JBlockStmt]
+              deriving (Eq, Ord, Show)
+
+jBlock stmts = JBlock stmts
+
+data JBlockStmt = JBlockStmt JStmt
+                   deriving (Eq, Ord, Show)
+
+jBlockStmt stmt = JBlockStmt stmt
+
+blockStmtToJ (BlockStmt stmt) = JBlockStmt $ stmtToJ stmt
+
+data JStmt = JReturn (Maybe JExp)
+             deriving (Eq, Ord, Show)
+
+jReturnVoid = JReturn Nothing
+
+stmtToJ (Return Nothing) = jReturnVoid
+
+data JExp = JExp
+            deriving (Eq, Ord, Show)
+
+data JModifier = JPublic
                  deriving (Eq, Ord, Show)
 
-modifierToJ m = JModifier
+jPublic = JPublic
+
+modifierToJ m = jPublic
 
 data JIdent = JIdent String
               deriving (Eq, Ord, Show)
@@ -72,6 +131,13 @@ jIdent = JIdent
 
 identToJ (Ident n) = jIdent n
 
+data JType
+  = JPrimType
+  | JRefType
+    deriving (Eq, Ord, Show)
+
+returnTypeToJ Nothing = Nothing
+
 data JTypeParam = JTypeParam
                   deriving (Eq, Ord, Show)
 
@@ -79,12 +145,36 @@ jTypeParam = JTypeParam
 
 typeParamToJ tp = jTypeParam
 
-data JRefType = JRefType
+data JFormalParam = JFP
+                    deriving (Eq, Ord, Show)
+
+formalParamToJ fp = JFP
+
+data JRefType = JClassRefType JClassType
                 deriving (Eq, Ord, Show)
 
-jRefType = JRefType
+jRefType = JClassRefType
+jClassRefType = JClassRefType
 
-refTypeToJ ref = jRefType
+refTypeToJ (ClassRefType (ClassType idTypeArgList)) =
+  jClassRefType $ jClassType $ idTypeArgListToJ idTypeArgList
+
+idTypeArgListToJ :: [(Ident, [TypeArgument])] -> [(JIdent, [JTypeArgument])]
+idTypeArgListToJ ls = L.map (\(id, tArgs) -> (identToJ id, L.map typeArgumentToJ tArgs)) ls
 
 superToJ (Just ref) = Just $ refTypeToJ ref
 superToJ Nothing = Nothing
+
+data JClassType = JClassType [(JIdent, [JTypeArgument])]
+                  deriving (Eq, Ord, Show)
+
+jClassType = JClassType
+
+data JTypeArgument = JActualType
+                     deriving (Eq, Ord, Show)
+
+typeArgumentToJ ta = JActualType
+
+type JExceptionType = JRefType
+
+exceptionTypeToJ ex = refTypeToJ ex

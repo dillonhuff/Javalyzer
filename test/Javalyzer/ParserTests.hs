@@ -8,4 +8,15 @@ allParserTests = do
   testFunctionFiles (testPath ++ "parserTests/") parseCompilationUnit testCases
 
 emptyClassDecl = jClassTypeDecl [] (jIdent "Empty") [] Nothing [] (jClassBody [])
-testCases = [("EmptyClass.java", Right $ jCompUnit Nothing [] [emptyClassDecl])]
+
+emptyMeth = jMethodDecl [jPublic] [] Nothing (jIdent "tinyMethod") [] [] $ jBlockMethod $ jBlock [jBlockStmt jReturnVoid]
+
+emptyMethodBody =
+  jClassBody [jMemberDecl emptyMeth]
+emptyMethodClassDecl =
+  jClassTypeDecl [] (jIdent "EmptyMethod") [] (Just $ jClassRefType $ jClassType [(jIdent "Object", [])]) [] emptyMethodBody
+
+
+testCases =
+  [("EmptyClass.java", Right $ jCompUnit Nothing [] [emptyClassDecl]),
+   ("EmptyMethod.java", Right $ jCompUnit Nothing [] [emptyMethodClassDecl])]
