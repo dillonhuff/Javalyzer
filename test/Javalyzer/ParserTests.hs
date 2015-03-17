@@ -29,7 +29,8 @@ testCases =
    ("BoolAsg.java", literalVarClass "BoolAsg" jBooleanT (jBoolean False)),
    ("CharAsg.java", literalVarClass "CharAsg" jCharT (jChar 'x')),
    ("DoubleAsg.java", literalVarClass "DoubleAsg" jDoubleT (jDouble 1234)),
-   ("EmptyConstructor.java", emptyConstructorClassDecl)]
+   ("EmptyConstructor.java", emptyConstructorClassDecl),
+   ("StringAssign.java", stringAssignClassDecl)]
 
 svMeth mods name stmts = jMethodDecl mods [] Nothing (jIdent name) [] [] $ jBlockMethod $ jBlock stmts
 
@@ -96,3 +97,8 @@ literalVarClass name pt lit =
 emptyConstructorClassDecl =
   rc [jClassTypeDecl [] (jIdent "EmptyConstructor") [] Nothing []
       (jClassBody [jMemberDecl $ jConstructorDecl [] [] (jIdent "EmptyConstructor") [] [] (jConstructorBody Nothing [])])]
+
+jDeclStrMeth = jBlockMethod $ jBlock [jLocalVars [] (jRefType $ jClassRefType $ jClassType [(jIdent "String", [])]) [jVarDecl (jVarId $ jIdent "str") (Just $ jInitExp $ jLit $ jString "a string!")]]
+assignStrMethod = jMethodDecl [] [] Nothing (jIdent "meth") [] [] jDeclStrMeth
+stringAssignClassDecl =
+  rc [jClassTypeDecl [] (jIdent "StringAssign") [] Nothing [] (jClassBody [jMemberDecl assignStrMethod])]

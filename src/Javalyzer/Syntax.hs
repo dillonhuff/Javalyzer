@@ -39,6 +39,7 @@ module Javalyzer.Syntax(JParseError,
                         jChar,
                         jFloat,
                         jDouble,
+                        jString,
                         jBooleanT,
                         jByteT,
                         jShortT,
@@ -293,6 +294,7 @@ data JLiteral
   | JChar Char
   | JFloat Double
   | JDouble Double
+  | JString String
     deriving (Eq, Ord, Show)
 
 jNull = JNull
@@ -302,6 +304,7 @@ jWord = JWord
 jChar = JChar
 jFloat = JFloat
 jDouble = JDouble
+jString = JString
 
 literalToJ Null = return jNull
 literalToJ (Int i) = return $ JInt i
@@ -309,6 +312,7 @@ literalToJ (Boolean b) = return $ JBoolean b
 literalToJ (Char c) = return $ JChar c
 literalToJ (Float f) = return $ JFloat f
 literalToJ (Double d) = return $ JDouble d
+literalToJ (String s) = return $ JString s
 literalToJ other = fail $ (show other) ++ " is not supported by literalToJ"
 
 data JAssignOp
