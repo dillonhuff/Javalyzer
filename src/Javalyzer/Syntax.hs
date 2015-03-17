@@ -9,6 +9,7 @@ module Javalyzer.Syntax(JParseError,
                         jMethodDecl,
                         jBlockMethod,
                         jBlockStmt,
+                        jMethodInv,
                         jLocalVars,
                         jBlock,
                         jReturnVoid,
@@ -17,16 +18,20 @@ module Javalyzer.Syntax(JParseError,
                         jClassType,
                         jAssign,
                         jLit,
+                        jExpName,
                         jNull,
                         jEqualA,
                         jRefType,
                         jVarId,
                         jVarDecl,
+                        jPrimaryMethodCall,
+                        jMethodCall,
                         jNameLhs,
                         jIdent,
                         jName,
                         jPublic,
                         jPrivate,
+                        jProtected,
                         jParseError) where
 
 import Control.Monad
@@ -176,10 +181,14 @@ stmtToJ other = fail $ (show other) ++ " is not supported by stmtToJ"
 data JExp
   = JLit JLiteral
   | JAssign JLhs JAssignOp JExp
+  | JMethodInv JMethodInvocation
+  | JExpName JName
     deriving (Eq, Ord, Show)
 
 jLit = JLit
 jAssign = JAssign
+jMethodInv = JMethodInv
+jExpName = JExpName
 
 expToJ (Lit l) = do
   lJ <- literalToJ l
@@ -189,7 +198,32 @@ expToJ (Assign lhs asgOp exp) = do
   asgOpJ <- assignOpToJ asgOp
   expJ <- expToJ exp
   return $ jAssign lhsJ asgOpJ expJ
+expToJ (MethodInv inv) = do
+  invJ <- methodInvocationToJ inv
+  return $ jMethodInv invJ
 expToJ other = fail $ (show other) ++ " is not supported by expToJ"
+
+type JArgument = JExp
+
+data JMethodInvocation
+  = JPrimaryMethodCall JExp [JRefType] JIdent [JArgument]
+  | JMethodCall JName [JArgument]
+    deriving (Eq, Ord, Show)
+
+jPrimaryMethodCall = JPrimaryMethodCall
+jMethodCall = JMethodCall
+
+methodInvocationToJ (PrimaryMethodCall exp refTs id args) = do
+  expJ <- expToJ exp
+  refTsJ <- mapM refTypeToJ refTs
+  idJ <- identToJ id
+  argsJ <- mapM expToJ args
+  return $ jPrimaryMethodCall expJ refTsJ idJ argsJ
+methodInvocationToJ (MethodCall n args) = do
+  nJ <- nameToJ n
+  argsJ <- mapM expToJ args
+  return $ jMethodCall nJ argsJ
+methodInvocationToJ other = fail $ (show other) ++ " is not supported by methodInvocationToJ"
 
 data JLiteral
   = JNull
@@ -237,14 +271,17 @@ data JVarInit
 data JModifier
   = JPublic
   | JPrivate
+  | JProtected
     deriving (Eq, Ord, Show)
 
 jPublic = JPublic
 jPrivate = JPrivate
+jProtected = JProtected
 
 modifierToJ :: Modifier -> JError JModifier
 modifierToJ Public = return jPublic
 modifierToJ Private = return jPrivate
+modifierToJ Protected = return jProtected
 modifierToJ m = fail $ show m ++ " is not a supported modifier"
 
 data JLhs = JNameLhs JName
