@@ -26,5 +26,5 @@ testCase func input expected =
 testCasesInFiles pathPrefix funcToTest fileNameExpectedResultPairs =
   let expected = L.map snd fileNameExpectedResultPairs
       fileNames = L.map (\(x, y) -> pathPrefix ++ x) fileNameExpectedResultPairs
-      results = mapM (applyToFileContents funcToTest) fileNames in
+      results = mapM (applyToFileContents funcToTest (\x y -> "")) fileNames in
   liftM (TestList . L.zipWith (\exp act -> TestCase $ assertEqual ("Input: " ++ show exp) exp act) expected) results

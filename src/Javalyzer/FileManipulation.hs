@@ -18,11 +18,15 @@ javaExtensions = [".java"]
 cExtensions = [".c", ".h"]
 cppExtensions = [".cpp", ".h", ".hpp"]
 
-applyToFileContents :: (String -> a) -> FilePath -> IO a
-applyToFileContents f path = do
+applyToFileContents :: (String -> a) -> (a -> FilePath -> String) -> FilePath -> IO a
+applyToFileContents f log path = do
+  putStrLn $ "Processing " ++ path ++ "\n"
   fileH <- SIO.openFile path ReadMode
   fileContents <- StrictIO.hGetContents fileH
-  return $ f fileContents
+  let res = f fileContents in
+    do
+      putStr $ log res path
+      return res
 
 allFilesWithExtensions :: [String] -> FilePath -> IO [FilePath]
 allFilesWithExtensions acceptableExtensions dir = do

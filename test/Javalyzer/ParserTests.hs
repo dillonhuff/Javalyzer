@@ -12,7 +12,9 @@ testCases =
   [("EmptyClass.java", rc [emptyClassDecl]),
    ("EmptyMethod.java", rc [emptyMethodClassDecl]),
    ("NullSetMethod.java", rc [nullSetMethodClassDecl]),
-   ("MethodInvoke.java", rc [methodInvokeClassDecl])]
+   ("MethodInvoke.java", rc [methodInvokeClassDecl]),
+   ("PackageDecl.java", rcP (jPackageDecl (jName [jIdent "stuff", jIdent "testCases"])) [packageDeclClassDecl]),
+   ("FinalClass.java", rc [finalClassDecl])]
 
 svMeth mods name stmts = jMethodDecl mods [] Nothing (jIdent name) [] [] $ jBlockMethod $ jBlock stmts
 
@@ -35,6 +37,8 @@ methodInvokeMeth =
 rc :: [JTypeDecl] -> JError JCompilationUnit
 rc classDecls = return $ jCompUnit Nothing [] classDecls
 
+rcP pkg classDecls = return $ jCompUnit (Just pkg) [] classDecls
+
 emptyClassDecl = jClassTypeDecl [] (jIdent "Empty") [] Nothing [] (jClassBody [])
 
 emptyMethodBody =
@@ -48,3 +52,9 @@ nullSetMethodClassDecl =
 
 methodInvokeClassDecl =
   jClassTypeDecl [jPublic] (jIdent "MethodInvoke") [] Nothing [] $ jClassBody [jMemberDecl methodInvokeMeth]
+
+packageDeclClassDecl =
+  jClassTypeDecl [jPublic] (jIdent "PackageDecl") [] Nothing [] $ jClassBody [jMemberDecl methodInvokeMeth]
+
+finalClassDecl =
+  jClassTypeDecl [jFinal] (jIdent "FinalClass") [] Nothing [] $ jClassBody [jMemberDecl methodInvokeMeth, jMemberDecl emptyMeth, jMemberDecl nullSetMeth]

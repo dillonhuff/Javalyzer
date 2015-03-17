@@ -2,6 +2,7 @@ module Javalyzer.Syntax(JParseError,
                         JCompilationUnit,
                         JTypeDecl,
                         compUnitToJ,
+                        jPackageDecl,
                         jCompUnit,
                         jClassTypeDecl,
                         jClassBody,
@@ -31,6 +32,7 @@ module Javalyzer.Syntax(JParseError,
                         jName,
                         jPublic,
                         jPrivate,
+                        jFinal,
                         jProtected,
                         jParseError) where
 
@@ -57,8 +59,10 @@ compUnitToJ (CompilationUnit packDecl imports typeDecls) = do
   typeDeclsJ <- mapM typeDeclToJ typeDecls
   return $ jCompUnit packDeclJ importsJ typeDeclsJ
 
-data JPackageDecl = JPD
+data JPackageDecl = JPackageDecl JName
                     deriving (Eq, Ord, Show)
+
+jPackageDecl = JPackageDecl
 
 maybePackageDeclToJ :: Maybe PackageDecl -> JError (Maybe JPackageDecl)
 maybePackageDeclToJ Nothing = return Nothing
@@ -69,7 +73,9 @@ maybePackageDeclToJ (Just dec) =
     (JFail str) -> (JFail str)
   
 packageDeclToJ :: PackageDecl -> JError JPackageDecl
-packageDeclToJ p = fail "packageDeclToJ not implemented"
+packageDeclToJ (PackageDecl n) = do
+  nJ <- nameToJ n
+  return $ jPackageDecl nJ
 
 data JImportDecl = JID
                    deriving (Eq, Ord, Show)
@@ -91,7 +97,8 @@ typeDeclToJ (ClassTypeDecl (ClassDecl mods id tps sup refs body)) = do
   supJ <- superToJ sup
   refsJ <- mapM refTypeToJ refs
   bodyJ <- classBodyToJ body
-  return $ jClassTypeDecl modsJ idJ tpsJ supJ refsJ bodyJ --(L.map modifierToJ mods) (identToJ id) (L.map typeParamToJ tps)(superToJ sup) (L.map refTypeToJ refs) (classBodyToJ body)
+  return $ jClassTypeDecl modsJ idJ tpsJ supJ refsJ bodyJ
+typeDeclToJ other = fail $ (show other) ++ " is not supported by typeDeclToJ"
 
 data JClassDecl = JClassDecl [JModifier] JIdent [JTypeParam] (Maybe JRefType) [JRefType] JClassBody
                   deriving (Eq, Ord, Show)
@@ -121,6 +128,7 @@ declToJ (MemberDecl (MethodDecl mods tps retType id fparams exceptions body)) = 
   exceptionsJ <- mapM exceptionTypeToJ exceptions
   bodyJ <- methodBodyToJ body
   return $ jMemberDecl $ jMethodDecl modsJ tpsJ retTypeJ idJ fparamsJ exceptionsJ bodyJ
+declToJ other = fail $ (show other) ++ " is not suported by declToJ"
 
 data JMemberDecl
   = JMethodDecl [JModifier] [JTypeParam] (Maybe JType) JIdent [JFormalParam] [JExceptionType] JMethodBody
@@ -272,16 +280,19 @@ data JModifier
   = JPublic
   | JPrivate
   | JProtected
+  | JFinal
     deriving (Eq, Ord, Show)
 
 jPublic = JPublic
 jPrivate = JPrivate
 jProtected = JProtected
+jFinal = JFinal
 
 modifierToJ :: Modifier -> JError JModifier
 modifierToJ Public = return jPublic
 modifierToJ Private = return jPrivate
 modifierToJ Protected = return jProtected
+modifierToJ Final = return jFinal
 modifierToJ m = fail $ show m ++ " is not a supported modifier"
 
 data JLhs = JNameLhs JName
@@ -324,6 +335,7 @@ typeToJ (RefType rt) = do
   return $ jRefType rtJ
 
 returnTypeToJ Nothing = return $ Nothing
+returnTypeToJ other = fail $ (show other) ++ " is not supported by returnTypeToJ"
 
 data JTypeParam = JTypeParam
                   deriving (Eq, Ord, Show)

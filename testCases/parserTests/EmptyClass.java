@@ -2,7 +2,6 @@
 an empty 
 class (C)
 */
-
 class Empty {
 
 }
