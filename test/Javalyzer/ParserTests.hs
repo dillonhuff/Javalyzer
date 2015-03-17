@@ -30,7 +30,8 @@ testCases =
    ("CharAsg.java", literalVarClass "CharAsg" jCharT (jChar 'x')),
    ("DoubleAsg.java", literalVarClass "DoubleAsg" jDoubleT (jDouble 1234)),
    ("EmptyConstructor.java", emptyConstructorClassDecl),
-   ("StringAssign.java", stringAssignClassDecl)]
+   ("StringAssign.java", stringAssignClassDecl),
+   ("TypeParamClass.java", typeParamClassDecl)]
 
 svMeth mods name stmts = jMethodDecl mods [] Nothing (jIdent name) [] [] $ jBlockMethod $ jBlock stmts
 
@@ -102,3 +103,6 @@ jDeclStrMeth = jBlockMethod $ jBlock [jLocalVars [] (jRefType $ jClassRefType $ 
 assignStrMethod = jMethodDecl [] [] Nothing (jIdent "meth") [] [] jDeclStrMeth
 stringAssignClassDecl =
   rc [jClassTypeDecl [] (jIdent "StringAssign") [] Nothing [] (jClassBody [jMemberDecl assignStrMethod])]
+
+typeParamClassDecl =
+  rc [jClassTypeDecl [] (jIdent "TypeParamClass") [jTypeParam (jIdent "T") []] Nothing [] (jClassBody [])]

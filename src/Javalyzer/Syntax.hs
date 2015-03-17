@@ -31,6 +31,7 @@ module Javalyzer.Syntax(JParseError,
                         jVarDecl,
                         jPrimaryMethodCall,
                         jMethodCall,
+                        jTypeParam,
                         jNameLhs,
                         jNull,
                         jBoolean,
@@ -458,12 +459,15 @@ primTypeToJ CharT = return jCharT
 primTypeToJ FloatT = return jFloatT
 primTypeToJ DoubleT = return jDoubleT
 
-data JTypeParam = JTypeParam
+data JTypeParam = JTypeParam JIdent [JRefType]
                   deriving (Eq, Ord, Show)
 
 jTypeParam = JTypeParam
 
-typeParamToJ tp = fail "typeParamToJ not implemented"
+typeParamToJ (TypeParam id refs) = do
+  idJ <- identToJ id
+  refsJ <- mapM refTypeToJ refs
+  return $ jTypeParam idJ refsJ
 
 data JFormalParam = JFP
                     deriving (Eq, Ord, Show)
