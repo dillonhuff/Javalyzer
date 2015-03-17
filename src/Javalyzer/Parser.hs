@@ -14,4 +14,4 @@ import Javalyzer.Utils
 parseCompilationUnit :: String -> JError JCompilationUnit
 parseCompilationUnit name = case parser compilationUnit name of
   Left err -> fail $ show err
-  Right compUnit -> return $ compUnitToJ compUnit
+  Right compUnit -> compUnitToJ compUnit
