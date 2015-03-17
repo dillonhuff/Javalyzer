@@ -261,7 +261,7 @@ methodInvocationToJ other = fail $ (show other) ++ " is not supported by methodI
 
 data JLiteral
   = JNull
-  | JBoolean
+  | JBoolean Bool
   | JInt Integer
   | JWord Integer
   | JChar Char
@@ -280,6 +280,10 @@ jDouble = JDouble
 
 literalToJ Null = return jNull
 literalToJ (Int i) = return $ JInt i
+literalToJ (Boolean b) = return $ JBoolean b
+literalToJ (Char c) = return $ JChar c
+literalToJ (Float f) = return $ JFloat f
+literalToJ (Double d) = return $ JDouble d
 literalToJ other = fail $ (show other) ++ " is not supported by literalToJ"
 
 data JAssignOp

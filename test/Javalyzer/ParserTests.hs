@@ -25,7 +25,10 @@ testCases =
    ("DoubleClass.java", primTypeClass "DoubleClass" jDoubleT),
    ("AbstractClass.java", abstractClassDecl),
    ("StaticMethod.java", staticMethodClassDecl),
-   ("IntAsg.java", literalVarClass "IntAsg" jIntT (jInt 12))]
+   ("IntAsg.java", literalVarClass "IntAsg" jIntT (jInt 12)),
+   ("BoolAsg.java", literalVarClass "BoolAsg" jBooleanT (jBoolean False)),
+   ("CharAsg.java", literalVarClass "CharAsg" jCharT (jChar 'x')),
+   ("DoubleAsg.java", literalVarClass "DoubleAsg" jDoubleT (jDouble 1234))]
 
 svMeth mods name stmts = jMethodDecl mods [] Nothing (jIdent name) [] [] $ jBlockMethod $ jBlock stmts
 
