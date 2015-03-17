@@ -1,9 +1,10 @@
-module Javalyzer.FileManipulation(applyToFileContents,
-                        allFilesWithExtensions,
-                        javaExtensions,
-                        cExtensions,
-                        cppExtensions,
-                        getRecursiveContents) where
+module Javalyzer.FileManipulation(
+  applyToFileContents,
+  allFilesWithExtensions,
+  javaExtensions,
+  cExtensions,
+  cppExtensions,
+  getRecursiveContents) where
 
 import Control.Monad (forM, liftM, mapM)
 import Data.List as L
@@ -21,13 +22,7 @@ applyToFileContents :: (String -> a) -> FilePath -> IO a
 applyToFileContents f path = do
   fileH <- SIO.openFile path ReadMode
   fileContents <- StrictIO.hGetContents fileH
-  putStrLn $ take 10 fileContents
   return $ f fileContents
-{-  putStrLn $ show $ length fileContents
-  let res = f fileContents in
-    do
-      hClose fileH
-      return res-}
 
 allFilesWithExtensions :: [String] -> FilePath -> IO [FilePath]
 allFilesWithExtensions acceptableExtensions dir = do
