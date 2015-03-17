@@ -9,6 +9,8 @@ module Javalyzer.Syntax(JParseError,
                         jMemberDecl,
                         jMethodDecl,
                         jFieldDecl,
+                        jConstructorDecl,
+                        jConstructorBody,
                         jBlockMethod,
                         jBlockStmt,
                         jMethodInv,
@@ -152,15 +154,39 @@ declToJ (MemberDecl (FieldDecl mods tp varDecls)) = do
   tpJ <- typeToJ tp
   varDeclsJ <- mapM varDeclToJ varDecls
   return $ jMemberDecl $ jFieldDecl modsJ tpJ varDeclsJ
+declToJ (MemberDecl (ConstructorDecl mods tps id fps exps body)) = do
+  modsJ <- mapM modifierToJ mods
+  tpsJ <- mapM typeParamToJ tps
+  idJ <- identToJ id
+  fpsJ <- mapM formalParamToJ fps
+  expsJ <- mapM exceptionTypeToJ exps
+  bodJ <- constructorBodyToJ body
+  return $ jMemberDecl $ jConstructorDecl modsJ tpsJ idJ fpsJ expsJ bodJ
+                       
 declToJ other = fail $ (show other) ++ " is not suported by declToJ"
 
 data JMemberDecl
   = JMethodDecl [JModifier] [JTypeParam] (Maybe JType) JIdent [JFormalParam] [JExceptionType] JMethodBody
   | JFieldDecl [JModifier] JType [JVarDecl]
+  | JConstructorDecl [JModifier] [JTypeParam] JIdent [JFormalParam] [JExceptionType] JConstructorBody
     deriving (Eq, Ord, Show)
 
 jMethodDecl = JMethodDecl
 jFieldDecl = JFieldDecl
+jConstructorDecl = JConstructorDecl
+
+data JConstructorBody = JConstructorBody (Maybe JExplConstrInv) [JBlockStmt]
+                        deriving (Eq, Ord, Show)
+
+jConstructorBody = JConstructorBody
+
+constructorBodyToJ (ConstructorBody Nothing stmts) = do
+  stmtsJ <- mapM blockStmtToJ stmts
+  return $ jConstructorBody Nothing stmtsJ
+constructorBodyToJ other = fail $ (show other) ++ " is not supported by constructorBodyToJ"
+
+data JExplConstrInv = JECV
+                      deriving (Eq, Ord, Show)
 
 data JMethodBody = JMethodBody (Maybe JBlock)
                    deriving (Eq, Ord, Show)
@@ -276,7 +302,6 @@ jWord = JWord
 jChar = JChar
 jFloat = JFloat
 jDouble = JDouble
-
 
 literalToJ Null = return jNull
 literalToJ (Int i) = return $ JInt i

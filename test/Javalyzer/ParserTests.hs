@@ -28,7 +28,8 @@ testCases =
    ("IntAsg.java", literalVarClass "IntAsg" jIntT (jInt 12)),
    ("BoolAsg.java", literalVarClass "BoolAsg" jBooleanT (jBoolean False)),
    ("CharAsg.java", literalVarClass "CharAsg" jCharT (jChar 'x')),
-   ("DoubleAsg.java", literalVarClass "DoubleAsg" jDoubleT (jDouble 1234))]
+   ("DoubleAsg.java", literalVarClass "DoubleAsg" jDoubleT (jDouble 1234)),
+   ("EmptyConstructor.java", emptyConstructorClassDecl)]
 
 svMeth mods name stmts = jMethodDecl mods [] Nothing (jIdent name) [] [] $ jBlockMethod $ jBlock stmts
 
@@ -92,8 +93,6 @@ literalVarClass name pt lit =
   rc [jClassTypeDecl [] (jIdent name) [] Nothing []
       (jClassBody [jMemberDecl (assignMethod pt lit)])]
   
---  jMethodDecl [] [] Nothing [] (jIdent "meth") [] [] $ jBlockMethod $ jBlock [jLocalVars [] (jPrimType pt) [jVarDecl (jVarId $ jIdent "v") (Just $ jInitExp $ jLit lit)]]
-  
-{-literalVarClass name pt lit =
-  rc [jClassTypeDecl [] (jIdent name) [] Nothing []
-      (jClassBody [jMemberDecl $ jMethodDecl [] [] Nothing [] (jIdent "meth") [] [] $ jBlockMethod $ jBlock [jLocalVars [] (jPrimType pt) (jVarDecl (jVarId $ jIdent "v")) (Just $ jInitExp $ jLit lit)]])]-}
+emptyConstructorClassDecl =
+  rc [jClassTypeDecl [] (jIdent "EmptyConstructor") [] Nothing []
+      (jClassBody [jMemberDecl $ jConstructorDecl [] [] (jIdent "EmptyConstructor") [] [] (jConstructorBody Nothing [])])]
