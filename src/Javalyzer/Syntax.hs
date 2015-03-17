@@ -43,6 +43,8 @@ module Javalyzer.Syntax(JParseError,
                         jPublic,
                         jPrivate,
                         jFinal,
+                        jAbstract,
+                        jStatic,
                         jProtected,
                         jParseError) where
 
@@ -298,18 +300,24 @@ data JModifier
   | JPrivate
   | JProtected
   | JFinal
+  | JAbstract
+  | JStatic
     deriving (Eq, Ord, Show)
 
 jPublic = JPublic
 jPrivate = JPrivate
 jProtected = JProtected
 jFinal = JFinal
+jAbstract = JAbstract
+jStatic = JStatic
 
 modifierToJ :: Modifier -> JError JModifier
 modifierToJ Public = return jPublic
 modifierToJ Private = return jPrivate
 modifierToJ Protected = return jProtected
 modifierToJ Final = return jFinal
+modifierToJ Abstract = return jAbstract
+modifierToJ Static = return jStatic
 modifierToJ m = fail $ show m ++ " is not a supported modifier"
 
 data JLhs = JNameLhs JName

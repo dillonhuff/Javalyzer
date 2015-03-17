@@ -22,7 +22,9 @@ testCases =
    ("LongClass.java", primTypeClass "LongClass" jLongT),
    ("CharClass.java", primTypeClass "CharClass" jCharT),
    ("FloatClass.java", primTypeClass "FloatClass" jFloatT),
-   ("DoubleClass.java", primTypeClass "DoubleClass" jDoubleT)]
+   ("DoubleClass.java", primTypeClass "DoubleClass" jDoubleT),
+   ("AbstractClass.java", abstractClassDecl),
+   ("StaticMethod.java", staticMethodClassDecl)]
 
 svMeth mods name stmts = jMethodDecl mods [] Nothing (jIdent name) [] [] $ jBlockMethod $ jBlock stmts
 
@@ -69,3 +71,10 @@ finalClassDecl =
 
 primTypeClass name tp =
   rc [jClassTypeDecl [] (jIdent name) [] Nothing [] (jClassBody [jMemberDecl $ jFieldDecl [] (jPrimType tp) [jVarDecl (jVarId $ jIdent "primField") Nothing]])]
+
+abstractClassDecl =
+  rc [jClassTypeDecl [jAbstract] (jIdent "AbstractClass") [] Nothing [] (jClassBody [])]
+
+staticMethodClassDecl =
+  rc [jClassTypeDecl [] (jIdent "StaticMethodClass") [] Nothing []
+      (jClassBody [jMemberDecl $ jMethodDecl [jStatic] [] Nothing (jIdent "absMethod") [] [] $ jBlockMethod $ jBlock [jBlockStmt jReturnVoid]])]
