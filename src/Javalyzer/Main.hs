@@ -18,5 +18,6 @@ main = do
   putStrLn "DONE"
 
 parseLog :: JError JCompilationUnit -> FilePath -> String
-parseLog (JSuccess unit) path = "\n\n\n" ++ path ++ "\nParse Succeeded\n\n\n"
+parseLog (JSuccess unit) path = "\n\n\n" ++ path ++
+         "\n**************** Parse Succeeded **********************\n\n\n"
 parseLog (JFail failMsg) path = "\n" ++ path ++ "\n" ++ failMsg ++ "\n"

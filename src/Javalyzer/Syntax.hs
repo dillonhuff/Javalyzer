@@ -16,13 +16,13 @@ module Javalyzer.Syntax(JParseError,
                         jBlock,
                         jReturnVoid,
                         jExpStmt,
+                        jInitExp,
                         jPrimType,
                         jClassRefType,
                         jClassType,
                         jAssign,
                         jLit,
                         jExpName,
-                        jNull,
                         jEqualA,
                         jRefType,
                         jVarId,
@@ -30,6 +30,13 @@ module Javalyzer.Syntax(JParseError,
                         jPrimaryMethodCall,
                         jMethodCall,
                         jNameLhs,
+                        jNull,
+                        jBoolean,
+                        jWord,
+                        jInt,
+                        jChar,
+                        jFloat,
+                        jDouble,
                         jBooleanT,
                         jByteT,
                         jShortT,
@@ -254,11 +261,25 @@ methodInvocationToJ other = fail $ (show other) ++ " is not supported by methodI
 
 data JLiteral
   = JNull
+  | JBoolean
+  | JInt Integer
+  | JWord Integer
+  | JChar Char
+  | JFloat Double
+  | JDouble Double
     deriving (Eq, Ord, Show)
 
 jNull = JNull
+jBoolean = JBoolean
+jInt = JInt
+jWord = JWord
+jChar = JChar
+jFloat = JFloat
+jDouble = JDouble
+
 
 literalToJ Null = return jNull
+literalToJ (Int i) = return $ JInt i
 literalToJ other = fail $ (show other) ++ " is not supported by literalToJ"
 
 data JAssignOp
@@ -278,7 +299,10 @@ jVarDecl = JVarDecl
 varDeclToJ (VarDecl vid Nothing) = do
   vidJ <- varDeclIdToJ vid
   return $ jVarDecl vidJ Nothing
-varDeclToJ other = fail $ (show other) ++ " is not suported by varDeclToJ"
+varDeclToJ (VarDecl vid (Just vinit)) = do
+  vidJ <- varDeclIdToJ vid
+  vinitJ <- varInitToJ vinit
+  return $ jVarDecl vidJ (Just vinitJ)
 
 data JVarDeclId
   = JVarId JIdent
@@ -294,6 +318,12 @@ varDeclIdToJ other = fail $ (show other) ++ " is not supported by varDeclIdToJ"
 data JVarInit
   = JInitExp JExp
     deriving (Eq, Ord, Show)
+
+jInitExp = JInitExp
+
+varInitToJ (InitExp ex) = do
+  exJ <- expToJ ex
+  return $ jInitExp exJ
 
 data JModifier
   = JPublic

@@ -24,7 +24,8 @@ testCases =
    ("FloatClass.java", primTypeClass "FloatClass" jFloatT),
    ("DoubleClass.java", primTypeClass "DoubleClass" jDoubleT),
    ("AbstractClass.java", abstractClassDecl),
-   ("StaticMethod.java", staticMethodClassDecl)]
+   ("StaticMethod.java", staticMethodClassDecl),
+   ("IntAsg.java", literalVarClass "IntAsg" jIntT (jInt 12))]
 
 svMeth mods name stmts = jMethodDecl mods [] Nothing (jIdent name) [] [] $ jBlockMethod $ jBlock stmts
 
@@ -78,3 +79,18 @@ abstractClassDecl =
 staticMethodClassDecl =
   rc [jClassTypeDecl [] (jIdent "StaticMethodClass") [] Nothing []
       (jClassBody [jMemberDecl $ jMethodDecl [jStatic] [] Nothing (jIdent "absMethod") [] [] $ jBlockMethod $ jBlock [jBlockStmt jReturnVoid]])]
+
+vInit lit = Just $ jInitExp $ jLit lit
+vDeclId = jVarId $ jIdent "v"
+vDecl lit = jVarDecl vDeclId (vInit lit)
+jDeclMeth pt lit = jBlockMethod $ jBlock [jLocalVars [] (jPrimType pt) [vDecl lit]]
+assignMethod pt lit = jMethodDecl [] [] Nothing (jIdent "meth") [] [] (jDeclMeth pt lit)
+literalVarClass name pt lit =
+  rc [jClassTypeDecl [] (jIdent name) [] Nothing []
+      (jClassBody [jMemberDecl (assignMethod pt lit)])]
+  
+--  jMethodDecl [] [] Nothing [] (jIdent "meth") [] [] $ jBlockMethod $ jBlock [jLocalVars [] (jPrimType pt) [jVarDecl (jVarId $ jIdent "v") (Just $ jInitExp $ jLit lit)]]
+  
+{-literalVarClass name pt lit =
+  rc [jClassTypeDecl [] (jIdent name) [] Nothing []
+      (jClassBody [jMemberDecl $ jMethodDecl [] [] Nothing [] (jIdent "meth") [] [] $ jBlockMethod $ jBlock [jLocalVars [] (jPrimType pt) (jVarDecl (jVarId $ jIdent "v")) (Just $ jInitExp $ jLit lit)]])]-}
