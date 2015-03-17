@@ -8,6 +8,7 @@ module Javalyzer.Syntax(JParseError,
                         jClassBody,
                         jMemberDecl,
                         jMethodDecl,
+                        jFieldDecl,
                         jBlockMethod,
                         jBlockStmt,
                         jMethodInv,
@@ -15,6 +16,7 @@ module Javalyzer.Syntax(JParseError,
                         jBlock,
                         jReturnVoid,
                         jExpStmt,
+                        jPrimType,
                         jClassRefType,
                         jClassType,
                         jAssign,
@@ -28,6 +30,14 @@ module Javalyzer.Syntax(JParseError,
                         jPrimaryMethodCall,
                         jMethodCall,
                         jNameLhs,
+                        jBooleanT,
+                        jByteT,
+                        jShortT,
+                        jIntT,
+                        jLongT,
+                        jCharT,
+                        jFloatT,
+                        jDoubleT,
                         jIdent,
                         jName,
                         jPublic,
@@ -128,13 +138,20 @@ declToJ (MemberDecl (MethodDecl mods tps retType id fparams exceptions body)) = 
   exceptionsJ <- mapM exceptionTypeToJ exceptions
   bodyJ <- methodBodyToJ body
   return $ jMemberDecl $ jMethodDecl modsJ tpsJ retTypeJ idJ fparamsJ exceptionsJ bodyJ
+declToJ (MemberDecl (FieldDecl mods tp varDecls)) = do
+  modsJ <- mapM modifierToJ mods
+  tpJ <- typeToJ tp
+  varDeclsJ <- mapM varDeclToJ varDecls
+  return $ jMemberDecl $ jFieldDecl modsJ tpJ varDeclsJ
 declToJ other = fail $ (show other) ++ " is not suported by declToJ"
 
 data JMemberDecl
   = JMethodDecl [JModifier] [JTypeParam] (Maybe JType) JIdent [JFormalParam] [JExceptionType] JMethodBody
+  | JFieldDecl [JModifier] JType [JVarDecl]
     deriving (Eq, Ord, Show)
 
 jMethodDecl = JMethodDecl
+jFieldDecl = JFieldDecl
 
 data JMethodBody = JMethodBody (Maybe JBlock)
                    deriving (Eq, Ord, Show)
@@ -324,18 +341,51 @@ nameToJ (Name ids) = do
 --nameToJ other = fail $ (show other) ++ " is not supported by nameToJ"
 
 data JType
-  = JPrimType
+  = JPrimType JPrimType
   | JRefType JRefType
     deriving (Eq, Ord, Show)
 
 jRefType = JRefType
+jPrimType = JPrimType
 
 typeToJ (RefType rt) = do
   rtJ <- refTypeToJ rt
   return $ jRefType rtJ
+typeToJ (PrimType pt) = do
+  ptJ <- primTypeToJ pt
+  return $ jPrimType ptJ
 
 returnTypeToJ Nothing = return $ Nothing
 returnTypeToJ other = fail $ (show other) ++ " is not supported by returnTypeToJ"
+
+data JPrimType
+  = JBooleanT
+  | JByteT
+  | JShortT
+  | JIntT
+  | JLongT
+  | JCharT
+  | JFloatT
+  | JDoubleT
+    deriving (Eq, Ord, Show)
+
+jBooleanT = JBooleanT
+jByteT = JByteT
+jShortT = JShortT
+jIntT = JIntT
+jLongT = JLongT
+jCharT = JCharT
+jFloatT = JFloatT
+jDoubleT = JDoubleT
+
+primTypeToJ BooleanT = return jBooleanT
+primTypeToJ ByteT = return jByteT
+primTypeToJ ShortT = return jShortT
+primTypeToJ IntT = return jIntT
+primTypeToJ LongT = return jLongT
+primTypeToJ CharT = return jCharT
+primTypeToJ FloatT = return jFloatT
+primTypeToJ DoubleT = return jDoubleT
 
 data JTypeParam = JTypeParam
                   deriving (Eq, Ord, Show)

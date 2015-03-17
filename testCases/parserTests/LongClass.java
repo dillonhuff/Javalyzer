@@ -1,0 +1,3 @@
+class LongClass {
+    long primField;
+}

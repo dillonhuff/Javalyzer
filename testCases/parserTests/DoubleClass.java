@@ -1,0 +1,3 @@
+class DoubleClass {
+    double primField;
+}

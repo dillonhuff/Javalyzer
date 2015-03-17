@@ -1,0 +1,3 @@
+class BooleanClass {
+    boolean primField;
+}

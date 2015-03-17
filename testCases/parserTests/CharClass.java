@@ -1,0 +1,3 @@
+class CharClass {
+    char primField;
+}

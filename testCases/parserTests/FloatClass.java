@@ -1,0 +1,3 @@
+class FloatClass {
+    float primField;
+}

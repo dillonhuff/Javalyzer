@@ -1,0 +1,3 @@
+class ByteClass {
+    byte primField;
+}

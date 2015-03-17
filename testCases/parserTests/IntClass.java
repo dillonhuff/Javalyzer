@@ -1,0 +1,4 @@
+class IntClass {
+
+    int primField;
+}

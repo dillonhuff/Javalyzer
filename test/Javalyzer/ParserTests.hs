@@ -14,7 +14,15 @@ testCases =
    ("NullSetMethod.java", rc [nullSetMethodClassDecl]),
    ("MethodInvoke.java", rc [methodInvokeClassDecl]),
    ("PackageDecl.java", rcP (jPackageDecl (jName [jIdent "stuff", jIdent "testCases"])) [packageDeclClassDecl]),
-   ("FinalClass.java", rc [finalClassDecl])]
+   ("FinalClass.java", rc [finalClassDecl]),
+   ("BooleanClass.java", primTypeClass "BooleanClass" jBooleanT),
+   ("ByteClass.java", primTypeClass "ByteClass" jByteT),
+   ("ShortClass.java", primTypeClass "ShortClass" jShortT),
+   ("IntClass.java", primTypeClass "IntClass" jIntT),
+   ("LongClass.java", primTypeClass "LongClass" jLongT),
+   ("CharClass.java", primTypeClass "CharClass" jCharT),
+   ("FloatClass.java", primTypeClass "FloatClass" jFloatT),
+   ("DoubleClass.java", primTypeClass "DoubleClass" jDoubleT)]
 
 svMeth mods name stmts = jMethodDecl mods [] Nothing (jIdent name) [] [] $ jBlockMethod $ jBlock stmts
 
@@ -58,3 +66,6 @@ packageDeclClassDecl =
 
 finalClassDecl =
   jClassTypeDecl [jFinal] (jIdent "FinalClass") [] Nothing [] $ jClassBody [jMemberDecl methodInvokeMeth, jMemberDecl emptyMeth, jMemberDecl nullSetMeth]
+
+primTypeClass name tp =
+  rc [jClassTypeDecl [] (jIdent name) [] Nothing [] (jClassBody [jMemberDecl $ jFieldDecl [] (jPrimType tp) [jVarDecl (jVarId $ jIdent "primField") Nothing]])]
