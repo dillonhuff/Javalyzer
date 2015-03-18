@@ -543,6 +543,7 @@ formalParamToJ (FormalParam mods tp False varDec) = do
   tpJ <- typeToJ tp
   varDecJ <- varDeclIdToJ varDec
   return $ JFormalParam modsJ tpJ False varDecJ
+formalParamToJ other = fail $ (show other) ++ " is not supported by formalParamToJ"
 
 data JRefType = JClassRefType JClassType
                 deriving (Eq, Ord, Show)
