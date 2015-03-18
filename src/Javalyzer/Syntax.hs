@@ -59,7 +59,9 @@ module Javalyzer.Syntax(JParseError,
                         jAbstract,
                         jStatic,
                         jProtected,
-                        jParseError) where
+                        jAnnotation,
+                        jParseError,
+                        jMarkerAnnotation) where
 
 import Control.Monad
 import Data.List as L
@@ -389,6 +391,7 @@ data JModifier
   | JFinal
   | JAbstract
   | JStatic
+  | JAnnotation JAnnotation
     deriving (Eq, Ord, Show)
 
 jPublic = JPublic
@@ -397,6 +400,7 @@ jProtected = JProtected
 jFinal = JFinal
 jAbstract = JAbstract
 jStatic = JStatic
+jAnnotation = JAnnotation
 
 modifierToJ :: Modifier -> JError JModifier
 modifierToJ Public = return jPublic
@@ -405,6 +409,9 @@ modifierToJ Protected = return jProtected
 modifierToJ Final = return jFinal
 modifierToJ Abstract = return jAbstract
 modifierToJ Static = return jStatic
+modifierToJ (Annotation ann) = do
+  annJ <- annotationToJ ann
+  return $ JAnnotation annJ
 modifierToJ m = fail $ show m ++ " is not a supported modifier"
 
 data JLhs = JNameLhs JName
@@ -541,3 +548,14 @@ type JExceptionType = JRefType
 
 exceptionTypeToJ :: ExceptionType -> JError JExceptionType
 exceptionTypeToJ ex = refTypeToJ ex
+
+data JAnnotation
+  = JMarkerAnnotation JName
+    deriving (Eq, Ord, Show)
+
+jMarkerAnnotation = JMarkerAnnotation
+
+annotationToJ (MarkerAnnotation n) = do
+  nJ <- nameToJ n
+  return $ jMarkerAnnotation nJ
+annotationToJ other = fail $ (show other) ++ " is not supported by annotationToJ"

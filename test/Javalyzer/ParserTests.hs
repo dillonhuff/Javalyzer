@@ -35,7 +35,8 @@ testCases =
    ("TypeParamClass.java", typeParamClassDecl),
    ("SuperClassCon.java", superClassConDecl),
    ("ExpNameAsg.java", expNameAsgClassDecl),
-   ("RetInt.java", retIntClassDecl)]
+   ("RetInt.java", retIntClassDecl),
+   ("MarkAnn.java", markAnnClassDecl)]
 
 svMeth mods name stmts = jMethodDecl mods [] Nothing (jIdent name) [] [] $ jBlockMethod $ jBlock stmts
 
@@ -128,3 +129,9 @@ ret5Meth = jMethodDecl [] []  (Just $ jPrimType jIntT) (jIdent "retInt") [] [] $
 retIntClassDecl =
   rc [jClassTypeDecl [] (jIdent "RetInt") [] Nothing []
       $ jClassBody [jMemberDecl ret5Meth]]
+
+retStr = jBlockStmt $ jReturn $ jLit $ jString "!@#$%^^&&"
+retStrMeth = jMethodDecl [jAnnotation $ jMarkerAnnotation $ sJName "Override"] [] (Just $ sRefT "String") (jIdent "toString") [] [] $ jBlockMethod $ jBlock [retStr]
+markAnnClassDecl =
+  rc [jClassTypeDecl [] (jIdent "MarkAnn") [] Nothing []
+      $ jClassBody [jMemberDecl retStrMeth]]
