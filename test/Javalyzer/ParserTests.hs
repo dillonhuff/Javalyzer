@@ -34,7 +34,8 @@ testCases =
    ("StringAssign.java", stringAssignClassDecl),
    ("TypeParamClass.java", typeParamClassDecl),
    ("SuperClassCon.java", superClassConDecl),
-   ("ExpNameAsg.java", expNameAsgClassDecl)]
+   ("ExpNameAsg.java", expNameAsgClassDecl),
+   ("RetInt.java", retIntClassDecl)]
 
 svMeth mods name stmts = jMethodDecl mods [] Nothing (jIdent name) [] [] $ jBlockMethod $ jBlock stmts
 
@@ -122,3 +123,8 @@ expNameAsgClassDecl =
   rc [jClassTypeDecl [] (jIdent "ExpNameAsg") [] Nothing []
       $ jClassBody [jMemberDecl strMeth]]
 
+ret5 = jBlockStmt $ jReturn $ jLit $ jInt 5
+ret5Meth = jMethodDecl [] []  (Just $ jPrimType jIntT) (jIdent "retInt") [] [] $ jBlockMethod $ jBlock [ret5]
+retIntClassDecl =
+  rc [jClassTypeDecl [] (jIdent "RetInt") [] Nothing []
+      $ jClassBody [jMemberDecl ret5Meth]]

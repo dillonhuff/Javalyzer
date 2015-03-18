@@ -18,6 +18,7 @@ module Javalyzer.Syntax(JParseError,
                         jLocalVars,
                         jBlock,
                         jReturnVoid,
+                        jReturn,
                         jExpStmt,
                         jInitExp,
                         jPrimType,
@@ -245,10 +246,15 @@ data JStmt
     deriving (Eq, Ord, Show)
 
 jReturnVoid = JReturn Nothing
+jReturn exp = JReturn $ Just exp
+
 jExpStmt = JExpStmt
 
 stmtToJ :: Stmt -> JError JStmt
 stmtToJ (Return Nothing) = return jReturnVoid
+stmtToJ (Return (Just ex)) = do
+  exJ <- expToJ ex
+  return $ jReturn exJ
 stmtToJ (ExpStmt exp) = do
   expJ <- expToJ exp
   return $ jExpStmt expJ
@@ -445,7 +451,9 @@ typeToJ (PrimType pt) = do
   return $ jPrimType ptJ
 
 returnTypeToJ Nothing = return $ Nothing
-returnTypeToJ other = fail $ (show other) ++ " is not supported by returnTypeToJ"
+returnTypeToJ (Just tp) = do
+  tpJ <- typeToJ tp
+  return $ Just tpJ
 
 data JPrimType
   = JBooleanT
