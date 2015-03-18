@@ -37,7 +37,9 @@ module Javalyzer.Syntax(JParseError,
                         jPrimaryMethodCall,
                         jMethodCall,
                         jTypeParam,
+                        jFormalParam,
                         jNameLhs,
+                        jFieldLhs,
                         jNull,
                         jBoolean,
                         jWord,
@@ -437,14 +439,20 @@ modifierToJ (Annotation ann) = do
   return $ JAnnotation annJ
 modifierToJ m = fail $ show m ++ " is not a supported modifier"
 
-data JLhs = JNameLhs JName
+data JLhs
+  = JNameLhs JName
+  | JFieldLhs JFieldAccess
             deriving (Eq, Ord, Show)
 
 jNameLhs = JNameLhs
+jFieldLhs = JFieldLhs
 
 lhsToJ (NameLhs id) = do
   idJ <- nameToJ id
   return $ jNameLhs idJ
+lhsToJ (FieldLhs fa) = do
+  faJ <- fieldAccessToJ fa
+  return $ jFieldLhs faJ 
 lhsToJ other = fail $ (show other) ++ " is not supported by lhsToJ"
 
 data JIdent = JIdent String
@@ -524,11 +532,17 @@ typeParamToJ (TypeParam id refs) = do
   refsJ <- mapM refTypeToJ refs
   return $ jTypeParam idJ refsJ
 
-data JFormalParam = JFP
+data JFormalParam = JFormalParam [JModifier] JType Bool JVarDeclId
                     deriving (Eq, Ord, Show)
 
+jFormalParam = JFormalParam
+
 formalParamToJ :: FormalParam -> JError JFormalParam
-formalParamToJ fp = return JFP
+formalParamToJ (FormalParam mods tp False varDec) = do
+  modsJ <- mapM modifierToJ mods
+  tpJ <- typeToJ tp
+  varDecJ <- varDeclIdToJ varDec
+  return $ JFormalParam modsJ tpJ False varDecJ
 
 data JRefType = JClassRefType JClassType
                 deriving (Eq, Ord, Show)

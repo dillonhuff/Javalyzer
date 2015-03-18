@@ -37,7 +37,8 @@ testCases =
    ("ExpNameAsg.java", expNameAsgClassDecl),
    ("RetInt.java", retIntClassDecl),
    ("MarkAnn.java", markAnnClassDecl),
-   ("ThisField.java", retThisClassDecl)]
+   ("ThisField.java", retThisClassDecl),
+   ("SetThis.java", setThisClassDecl)]
 
 svMeth mods name stmts = jMethodDecl mods [] Nothing (jIdent name) [] [] $ jBlockMethod $ jBlock stmts
 
@@ -144,3 +145,9 @@ retThisMeth = jMethodDecl [] [] (Just $ jPrimType $ jDoubleT) (jIdent "getM") []
 retThisClassDecl =
   rc [jClassTypeDecl [] (jIdent "ThisField") [] Nothing []
       $ jClassBody [jMemberDecl defM, jMemberDecl retThisMeth]]
+
+setThisM = jBlockStmt $ jExpStmt $ jAssign (jFieldLhs $ jPrimaryFieldAccess jThis (jIdent "m")) jEqualA (jExpName $ sJName "n")
+setThisMethod = jMethodDecl [] [] Nothing (jIdent "setM") [jFormalParam [] (jPrimType jDoubleT) False (jVarId $ jIdent "n")] [] $ jBlockMethod $ jBlock [setThisM]
+setThisClassDecl =
+  rc [jClassTypeDecl [] (jIdent "SetThis") [] Nothing []
+      $ jClassBody [jMemberDecl defM, jMemberDecl setThisMethod]]
