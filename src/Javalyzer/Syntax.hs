@@ -11,6 +11,7 @@ module Javalyzer.Syntax(JParseError,
                         jFieldDecl,
                         jConstructorDecl,
                         jConstructorBody,
+                        jSuperInvoke,
                         jBlockMethod,
                         jBlockStmt,
                         jMethodInv,
@@ -185,10 +186,23 @@ jConstructorBody = JConstructorBody
 constructorBodyToJ (ConstructorBody Nothing stmts) = do
   stmtsJ <- mapM blockStmtToJ stmts
   return $ jConstructorBody Nothing stmtsJ
-constructorBodyToJ other = fail $ (show other) ++ " is not supported by constructorBodyToJ"
+constructorBodyToJ (ConstructorBody (Just explCall) stmts) = do
+  explCallJ <- explConstrInvToJ explCall
+  stmtsJ <- mapM blockStmtToJ stmts
+  return $ jConstructorBody (Just explCallJ) stmtsJ
+--constructorBodyToJ other = fail $ (show other) ++ " is not supported by constructorBodyToJ"
 
-data JExplConstrInv = JECV
-                      deriving (Eq, Ord, Show)
+data JExplConstrInv
+  = JSuperInvoke [JRefType] [JArgument]
+    deriving (Eq, Ord, Show)
+
+jSuperInvoke = JSuperInvoke
+
+explConstrInvToJ (SuperInvoke refs args) = do
+  refsJ <- mapM refTypeToJ refs
+  argsJ <- mapM expToJ args
+  return $ jSuperInvoke refsJ argsJ
+explConstrInvToJ other = fail $ (show other) ++ " is not supported by explConstrInvToJ"
 
 data JMethodBody = JMethodBody (Maybe JBlock)
                    deriving (Eq, Ord, Show)
@@ -263,6 +277,9 @@ expToJ (Assign lhs asgOp exp) = do
 expToJ (MethodInv inv) = do
   invJ <- methodInvocationToJ inv
   return $ jMethodInv invJ
+expToJ (ExpName n) = do
+  nJ <- nameToJ n
+  return $ jExpName nJ
 expToJ other = fail $ (show other) ++ " is not supported by expToJ"
 
 type JArgument = JExp

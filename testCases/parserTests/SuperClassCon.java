@@ -1,0 +1,5 @@
+class SuperClassCon {
+    SuperClassCon() {
+	super();
+    }
+}

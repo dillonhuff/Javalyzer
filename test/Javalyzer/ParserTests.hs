@@ -2,6 +2,7 @@ module Javalyzer.ParserTests(allParserTests) where
 
 import Javalyzer.Parser
 import Javalyzer.Syntax
+import Javalyzer.SyntaxConvenience
 import Javalyzer.TestUtils
 import Javalyzer.Utils
 
@@ -31,7 +32,9 @@ testCases =
    ("DoubleAsg.java", literalVarClass "DoubleAsg" jDoubleT (jDouble 1234)),
    ("EmptyConstructor.java", emptyConstructorClassDecl),
    ("StringAssign.java", stringAssignClassDecl),
-   ("TypeParamClass.java", typeParamClassDecl)]
+   ("TypeParamClass.java", typeParamClassDecl),
+   ("SuperClassCon.java", superClassConDecl),
+   ("ExpNameAsg.java", expNameAsgClassDecl)]
 
 svMeth mods name stmts = jMethodDecl mods [] Nothing (jIdent name) [] [] $ jBlockMethod $ jBlock stmts
 
@@ -40,13 +43,13 @@ nullSetMeth =
   svMeth
         [jPrivate]
         "setNull"
-        [jLocalVars [] (jRefType $ jClassRefType $ jClassType [(jIdent "Object", [])]) [jVarDecl (jVarId (jIdent "p")) Nothing], jBlockStmt $ jExpStmt $ jAssign (jNameLhs (jName [jIdent "p"])) jEqualA (jLit jNull), jBlockStmt jReturnVoid]
+        [jLocalVars [] (jRefType $ jClassRefType $ jClassType [(jIdent "Object", [])]) [jVarDecl (jVarId (jIdent "p")) Nothing], jBlockStmt $ jExpStmt $ jAssign (jNameLhs (sJName "p")) jEqualA (jLit jNull), jBlockStmt jReturnVoid]
 methodInvokeMeth =
   svMeth
         [jProtected]
         "invokeToString"
         [jLocalVars [] (jRefType $ jClassRefType $ jClassType [(jIdent "Object", [])]) [jVarDecl (jVarId (jIdent "p")) Nothing],
-         jBlockStmt $ jExpStmt $ jAssign (jNameLhs (jName [jIdent "p"])) jEqualA (jLit jNull),
+         jBlockStmt $ jExpStmt $ jAssign (jNameLhs (sJName "p")) jEqualA (jLit jNull),
          jBlockStmt $ jExpStmt $ jMethodInv $ jMethodCall (jName [jIdent "p", jIdent "toString"]) [],
          jBlockStmt jReturnVoid]
 
@@ -106,3 +109,16 @@ stringAssignClassDecl =
 
 typeParamClassDecl =
   rc [jClassTypeDecl [] (jIdent "TypeParamClass") [jTypeParam (jIdent "T") []] Nothing [] (jClassBody [])]
+
+superClassConDecl =
+  rc [jClassTypeDecl [] (jIdent "SuperClassCon") [] Nothing []
+      (jClassBody [jMemberDecl $ jConstructorDecl [] [] (jIdent "SuperClassCon") [] [] (jConstructorBody (Just $ jSuperInvoke [] []) [])])]
+
+declString name = jLocalVars [] (sRefT "String") [jVarDecl (jVarId $ jIdent name) Nothing]
+
+strBlck = jBlock [sLocRef "String" "first", sLocRef "String" "second", asgVarsBSt "first" "second"]
+strMeth = jMethodDecl [] [] Nothing (jIdent "setStrs") [] [] $ jBlockMethod strBlck
+expNameAsgClassDecl =
+  rc [jClassTypeDecl [] (jIdent "ExpNameAsg") [] Nothing []
+      $ jClassBody [jMemberDecl strMeth]]
+
