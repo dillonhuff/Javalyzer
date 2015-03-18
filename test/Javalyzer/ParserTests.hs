@@ -36,7 +36,8 @@ testCases =
    ("SuperClassCon.java", superClassConDecl),
    ("ExpNameAsg.java", expNameAsgClassDecl),
    ("RetInt.java", retIntClassDecl),
-   ("MarkAnn.java", markAnnClassDecl)]
+   ("MarkAnn.java", markAnnClassDecl),
+   ("ThisField.java", retThisClassDecl)]
 
 svMeth mods name stmts = jMethodDecl mods [] Nothing (jIdent name) [] [] $ jBlockMethod $ jBlock stmts
 
@@ -135,3 +136,11 @@ retStrMeth = jMethodDecl [jAnnotation $ jMarkerAnnotation $ sJName "Override"] [
 markAnnClassDecl =
   rc [jClassTypeDecl [] (jIdent "MarkAnn") [] Nothing []
       $ jClassBody [jMemberDecl retStrMeth]]
+
+retThisM = jBlockStmt $ jReturn $ jFieldAccess $ jPrimaryFieldAccess jThis (jIdent "m")
+defM = jFieldDecl [] (jPrimType jDoubleT) [sVarD "m"]
+retThisMeth = jMethodDecl [] [] (Just $ jPrimType $ jDoubleT) (jIdent "getM") [] []
+              $ jBlockMethod $ jBlock [retThisM]
+retThisClassDecl =
+  rc [jClassTypeDecl [] (jIdent "ThisField") [] Nothing []
+      $ jClassBody [jMemberDecl defM, jMemberDecl retThisMeth]]

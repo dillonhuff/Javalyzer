@@ -25,7 +25,10 @@ module Javalyzer.Syntax(JParseError,
                         jClassRefType,
                         jClassType,
                         jAssign,
+                        jFieldAccess,
+                        jThis,
                         jLit,
+                        jPrimaryFieldAccess,
                         jExpName,
                         jEqualA,
                         jRefType,
@@ -267,12 +270,16 @@ data JExp
   | JAssign JLhs JAssignOp JExp
   | JMethodInv JMethodInvocation
   | JExpName JName
+  | JFieldAccess JFieldAccess
+  | JThis
     deriving (Eq, Ord, Show)
 
 jLit = JLit
 jAssign = JAssign
 jMethodInv = JMethodInv
 jExpName = JExpName
+jFieldAccess = JFieldAccess
+jThis = JThis
 
 expToJ (Lit l) = do
   lJ <- literalToJ l
@@ -288,9 +295,25 @@ expToJ (MethodInv inv) = do
 expToJ (ExpName n) = do
   nJ <- nameToJ n
   return $ jExpName nJ
+expToJ (FieldAccess fa) = do
+  faJ <- fieldAccessToJ fa
+  return $ jFieldAccess faJ
+expToJ This = return JThis
 expToJ other = fail $ (show other) ++ " is not supported by expToJ"
 
 type JArgument = JExp
+
+data JFieldAccess
+  = JPrimaryFieldAccess JExp JIdent
+    deriving (Eq, Ord, Show)
+
+jPrimaryFieldAccess = JPrimaryFieldAccess
+
+fieldAccessToJ (PrimaryFieldAccess exp id) = do
+  expJ <- expToJ exp
+  idJ <- identToJ id
+  return $ jPrimaryFieldAccess expJ idJ
+fieldAccessToJ other = fail $ (show other) ++ " is not supported by fieldAccessToJ"
 
 data JMethodInvocation
   = JPrimaryMethodCall JExp [JRefType] JIdent [JArgument]
