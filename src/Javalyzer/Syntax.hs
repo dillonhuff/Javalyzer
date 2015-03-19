@@ -106,12 +106,18 @@ module Javalyzer.Syntax(JParseError,
                         JAnnotation,
                         jId,
                         JBlockStmt,
-                        jMethodBody) where
+                        jMethodBody,
+                        dsCompilationUnit,
+                        dsBlockStmt,
+                        dsVarIdent,
+                        dsTypeParam) where
 
 import Control.Monad
 import Data.List as L
+import Data.Set as S
 import Language.Java.Syntax
 
+import Javalyzer.Desugared
 import Javalyzer.Utils
 
 data JParseError = JParseError String
@@ -420,7 +426,7 @@ data JClassType = JClassType [(JIdent, [JTypeArgument])]
 
 jClassType = JClassType
 
-data JTypeArgument = JActualType
+data JTypeArgument = JActualType JRefType
                      deriving (Eq, Ord, Show)
 
 type JExceptionType = JRefType
@@ -430,3 +436,50 @@ data JAnnotation
     deriving (Eq, Ord, Show)
 
 jMarkerAnnotation = JMarkerAnnotation
+
+-- Desugaring conversion
+dsCompilationUnit :: JCompilationUnit -> JError DCompilationUnit
+dsCompilationUnit jcu@(JCompilationUnit pkg imps typeDecls) =
+  let classes = classDecls jcu in
+  do
+    dsClasses <- mapM dsClassDecl classes
+    return $ dCompilationUnit Nothing [] [] dsClasses
+
+dsClassDecl :: JClassDecl -> JError DClassDecl
+dsClassDecl cd = return $ dClassDecl "Empty" [] Nothing [] [] []
+
+dsBlockStmt :: Set DTypeParam -> JBlockStmt -> JError DStmt
+dsBlockStmt tvs (JLocalVars mods tp decls) = fail "dsBlockStmt not implemented"
+
+dsVarIdent :: JIdent -> DVarIdent
+dsVarIdent (JIdent n) = dVarIdent n
+
+dsTypeParam :: Set DTypeParam -> JTypeParam -> DTypeParam
+dsTypeParam existingTps (JTypeParam id refs) =
+  let dRefs = L.map (dsRefType existingTps) refs in
+  dTypeParam (jIdentName id) dRefs
+
+dsRefType :: Set DTypeParam -> JRefType -> DRefType
+dsRefType typeParams (JClassRefType ct) =
+  dClassRefType $ dsClassType typeParams ct
+
+dsClassType :: Set DTypeParam -> JClassType -> DClassType
+dsClassType typeParams (JClassType cts) =
+  let ids = L.map fst cts
+      tpArgs = L.map snd cts
+      dsIds = L.map (dsTypeId typeParams) ids
+      dsTpArgs = L.map (L.map (dsTypeArgument typeParams)) tpArgs in
+  dClassType $ L.zip dsIds dsTpArgs
+
+dsTypeId :: Set DTypeParam -> JIdent -> DTypeId
+dsTypeId typeParams (JIdent name) =
+  case isTypeParam typeParams name of
+    True -> dTypeVar name
+    False -> dClassName name
+
+isTypeParam tps name =
+  S.member name $ S.map dTypeParamName tps
+
+dsTypeArgument :: Set DTypeParam -> JTypeArgument -> DTypeArg
+dsTypeArgument typeParams (JActualType rt) =
+  dActualType $ dsRefType typeParams rt
