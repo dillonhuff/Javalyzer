@@ -1,11 +1,33 @@
 module Javalyzer.Syntax(JParseError,
                         JCompilationUnit,
-                        JTypeDecl,
-                        compUnitToJ,
-                        jPackageDecl,
+                        compUnitToJ,                        
                         jCompUnit,
+                        package,
+                        imports,
+                        decls,
+                        classDecls,
+                        isSingleClass,
+                        JTypeDecl,
+                        JClassDecl,
+                        jClassDecl,
+                        classBody,
+                        className,
+                        JPackageDecl,
+                        jPackageDecl,
+                        JImportDecl,
                         jClassTypeDecl,
                         jClassBody,
+                        bodyDecls,
+                        JMemberDecl,
+                        JDeclType(..),
+                        getMember,
+                        declType,
+                        JMemberDeclType(..),
+                        memberDeclType,
+                        fieldMods,
+                        fieldType,
+                        fieldVarDecls,
+                        JDecl,
                         jMemberDecl,
                         jMethodDecl,
                         jFieldDecl,
@@ -31,7 +53,13 @@ module Javalyzer.Syntax(JParseError,
                         jPrimaryFieldAccess,
                         jExpName,
                         jEqualA,
+                        JType,
                         jRefType,
+                        JVarDecl,
+                        JVarDeclIdType(..),
+                        varDeclIdType,
+                        getVarIdent,
+                        getVarDeclId,
                         jVarId,
                         jVarDecl,
                         jPrimaryMethodCall,
@@ -56,8 +84,11 @@ module Javalyzer.Syntax(JParseError,
                         jCharT,
                         jFloatT,
                         jDoubleT,
+                        JIdent,
+                        jIdentName,
                         jIdent,
                         jName,
+                        JModifier,
                         jPublic,
                         jPrivate,
                         jFinal,
@@ -83,6 +114,18 @@ data JCompilationUnit = JCompilationUnit (Maybe JPackageDecl) [JImportDecl] [JTy
                         deriving (Eq, Ord, Show)
 
 jCompUnit = JCompilationUnit
+
+package (JCompilationUnit pkg _ _) = pkg
+imports (JCompilationUnit _ imps _) = imps
+decls (JCompilationUnit _ _ ds) = ds
+classDecls jcu = L.map getClassDecl $ L.filter isClassDecl $ decls jcu
+
+isSingleClass (JCompilationUnit _ _ decls) =
+  case length decls == 1 of
+    True -> case decls of
+      ((JClassTypeDecl classDec):nil) -> True
+      _ -> False
+    False -> False
 
 compUnitToJ :: CompilationUnit -> JError JCompilationUnit
 compUnitToJ (CompilationUnit packDecl imports typeDecls) = do
@@ -121,6 +164,10 @@ data JTypeDecl = JClassTypeDecl JClassDecl
 jClassTypeDecl mods name typeParams super refTypes body =
   JClassTypeDecl $ jClassDecl mods name typeParams super refTypes body
 
+isClassDecl (JClassTypeDecl _) = True
+
+getClassDecl (JClassTypeDecl d) = d
+
 typeDeclToJ :: TypeDecl -> JError JTypeDecl
 typeDeclToJ (ClassTypeDecl (ClassDecl mods id tps sup refs body)) = do
   modsJ <- mapM modifierToJ mods
@@ -136,11 +183,15 @@ data JClassDecl = JClassDecl [JModifier] JIdent [JTypeParam] (Maybe JRefType) [J
                   deriving (Eq, Ord, Show)
 
 jClassDecl = JClassDecl
+className (JClassDecl _ id _ _ _ _) = jIdentName id
+classBody (JClassDecl _ _ _ _ _ b) = b
 
 data JClassBody = JClassBody [JDecl]
                   deriving (Eq, Ord, Show)
 
 jClassBody = JClassBody
+
+bodyDecls (JClassBody ds) = ds
 
 classBodyToJ (ClassBody decls) = do
   declsJ <- mapM declToJ decls
@@ -148,6 +199,14 @@ classBodyToJ (ClassBody decls) = do
 
 data JDecl = JMemberDecl JMemberDecl
              deriving (Eq, Ord, Show)
+
+data JDeclType
+  = MEMBER
+    deriving (Eq, Ord, Show)
+
+getMember (JMemberDecl m) = m
+             
+declType (JMemberDecl _) = MEMBER
 
 jMemberDecl = JMemberDecl
 
@@ -182,9 +241,23 @@ data JMemberDecl
   | JConstructorDecl [JModifier] [JTypeParam] JIdent [JFormalParam] [JExceptionType] JConstructorBody
     deriving (Eq, Ord, Show)
 
+data JMemberDeclType
+  = FIELD
+  | METHOD
+  | CONSTRUCTOR
+    deriving (Eq, Ord, Show)
+
+memberDeclType (JMethodDecl _ _ _ _ _ _ _) = METHOD
+memberDeclType (JFieldDecl _ _ _) = FIELD
+memberDeclType (JConstructorDecl _ _ _ _ _ _) = CONSTRUCTOR
+
 jMethodDecl = JMethodDecl
 jFieldDecl = JFieldDecl
 jConstructorDecl = JConstructorDecl
+
+fieldMods (JFieldDecl mods _ _) = mods
+fieldType (JFieldDecl _ tp _) = tp
+fieldVarDecls (JFieldDecl _ _ vDecls) = vDecls
 
 data JConstructorBody = JConstructorBody (Maybe JExplConstrInv) [JBlockStmt]
                         deriving (Eq, Ord, Show)
@@ -380,6 +453,8 @@ data JVarDecl = JVarDecl JVarDeclId (Maybe JVarInit)
 
 jVarDecl = JVarDecl
 
+getVarDeclId (JVarDecl vid _) = vid
+
 varDeclToJ (VarDecl vid Nothing) = do
   vidJ <- varDeclIdToJ vid
   return $ jVarDecl vidJ Nothing
@@ -391,6 +466,14 @@ varDeclToJ (VarDecl vid (Just vinit)) = do
 data JVarDeclId
   = JVarId JIdent
     deriving (Eq, Ord, Show)
+
+data JVarDeclIdType
+  = VARID
+    deriving (Eq, Ord, Show)
+             
+varDeclIdType (JVarId _) = VARID
+
+getVarIdent (JVarId id) = id
 
 jVarId = JVarId
 
@@ -459,6 +542,8 @@ data JIdent = JIdent String
               deriving (Eq, Ord, Show)
 
 jIdent = JIdent
+
+jIdentName (JIdent str) = str
 
 identToJ :: Ident -> JError JIdent
 identToJ (Ident n) = return $ jIdent n

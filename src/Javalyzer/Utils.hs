@@ -1,4 +1,5 @@
-module Javalyzer.Utils(JError(..)) where
+module Javalyzer.Utils(JError(..),
+                       isFail) where
 
 import Control.Applicative
 import Control.Monad
@@ -8,12 +9,12 @@ data JError a
      | JSuccess a
        deriving (Eq, Ord)
 
+isFail (JFail _) = True
+isFail _ = False
+
 instance (Show a) => (Show (JError a)) where
   show (JFail str) = "JError: " ++ str
   show (JSuccess res) = "Success: " ++ show res
-
-jFail :: String -> JError a
-jFail str = JFail str
 
 instance Monad JError where
   (>>=) (JFail str) _ = JFail str

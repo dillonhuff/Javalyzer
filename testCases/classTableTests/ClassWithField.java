@@ -1,0 +1,4 @@
+class ClassWithField {
+
+    int iNum;
+}
