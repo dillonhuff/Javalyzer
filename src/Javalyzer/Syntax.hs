@@ -544,7 +544,27 @@ dsBlockStmt :: Set DTypeParam -> JBlockStmt -> JError [DStmt]
 dsBlockStmt tvs (JLocalVars mods tp decls) = do
   tpD <- dsType tvs tp
   liftM L.concat $ mapM (dsVarDeclStmt mods tpD) decls
-dsBlockStmt tvs other = fail $ (show other) ++ " is not supported by dsBlockStmt"
+dsBlockStmt tvs (JBlockStmt stmt) = do
+  st <- dsStmt tvs stmt
+  return [st]
+
+dsStmt :: Set DTypeParam -> JStmt -> JError DStmt
+dsStmt tvs (JReturn Nothing) = return $ dReturn Nothing
+dsStmt tvs (JReturn (Just exp)) = do
+  expD <- dsExp tvs exp
+  return $ dReturn $ Just expD
+dsStmt tvs other = fail $ (show other) ++ " is not yet supported by dsStmt"
+
+dsExp :: Set DTypeParam -> JExp -> JError DExp
+dsExp tvs JThis = return dThis
+dsExp tvs (JLit l) = return $ dLit $ dsLiteral l
+dsExp tvs (JFieldAccess (JPrimaryFieldAccess exp id)) = do
+  expD <- dsExp tvs exp
+  return $ dPrimaryFieldAccess expD (dsVarIdent id)
+dsExp tvs other = fail $ (show other) ++ " is not yet supported by dsExp"
+
+dsLiteral :: JLiteral -> DLiteral
+dsLiteral (JChar c) = dChar c
 
 dsVarDeclStmt :: [JModifier] -> DType -> JVarDecl -> JError [DStmt]
 dsVarDeclStmt mods tp vdecl = do

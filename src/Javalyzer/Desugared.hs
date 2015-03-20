@@ -6,7 +6,9 @@ module Javalyzer.Desugared(
   DClassDecl, dClassDecl,
   DMethod, dMethod,
   DConstructor,
-  DStmt, dVarDeclSt, dLocalVarDecl,
+  DStmt, dVarDeclSt, dLocalVarDecl, dReturn, dExpSt,
+  DExp, dLit, dPrimaryFieldAccess, dThis,
+  DLiteral, dChar,
   DVarDecl, dVarDecl,
   DFormalParam,
   DVarIdent, dVarIdent,
@@ -17,13 +19,17 @@ module Javalyzer.Desugared(
   DClassType, dClassType,
   DTypeId, dTypeVar, dClassName,
   DTypeArg, dActualType,
-  Modifiers, noMods) where
+  Modifiers, noMods,
+  firstBlock) where
 
 data DCompilationUnit
   = DCompilationUnit (Maybe DPackage) [DImportDecl] [DInterfaceDecl] [DClassDecl]
     deriving (Eq, Ord, Show)
 
 dCompilationUnit = DCompilationUnit
+
+firstBlock (DCompilationUnit _ _ _ classes) =
+  methodBody $ firstMethod $ head classes
 
 data DPackage
   = DPackage [String]
@@ -61,6 +67,8 @@ dClassDecl name tps superClass fields methods constructors =
     Nothing -> DClassDecl name tps dObjectRef fields methods constructors
     Just s -> DClassDecl name tps s fields methods constructors
 
+firstMethod (DClassDecl _ _ _ _ meths _) = head meths
+
 data DInstField
   = DInstField DType DVarIdent
     deriving (Eq, Ord, Show)
@@ -71,16 +79,40 @@ data DMethod
 
 dMethod = DMethod
 
+methodBody (DMethod _ _ _ _ _ _ body) = body
+
 data DConstructor
   = DC
     deriving (Eq, Ord, Show)
 
-data DStmt = DVarDeclSt DVarDecl
-             deriving (Eq, Ord, Show)
+data DStmt
+  = DVarDeclSt DVarDecl
+  | DReturn (Maybe DExp)
+  | DExpSt DExp
+    deriving (Eq, Ord, Show)
 
 dVarDeclSt = DVarDeclSt
+dReturn = DReturn
+dExpSt = DExpSt
+
 
 dLocalVarDecl mods tp varName = dVarDeclSt $ dVarDecl mods tp varName
+
+data DExp
+  = DLit DLiteral
+  | DPrimaryFieldAccess DExp DVarIdent
+  | DThis
+    deriving (Eq, Ord, Show)
+
+dLit = DLit
+dPrimaryFieldAccess = DPrimaryFieldAccess
+dThis = DThis
+
+data DLiteral
+  = DChar Char
+    deriving (Eq, Ord, Show)
+
+dChar = DChar
 
 data DVarDecl = DVarDecl Modifiers DType DVarIdent
                 deriving (Eq, Ord, Show)

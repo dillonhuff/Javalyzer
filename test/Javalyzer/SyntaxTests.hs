@@ -1,5 +1,6 @@
 module Javalyzer.SyntaxTests(allSyntaxTests) where
 
+import Control.Monad
 import Data.List as L
 import Data.Set as S
 
@@ -14,7 +15,10 @@ allSyntaxTests = do
   testFunction (dsTypeParam typeParams) typeParamCases
   testFunctionFiles (testPath ++ "desugarTests/") desugarStr desugarCompUnitCases
   testFunction (dsBlockStmt typeParams) blockStmtCases
+  testFunctionFiles (testPath ++ "desugarTests/") desugarFirstStmt desugarFirstStmtCases
 
+desugarFirstStmt str = liftM (head . firstBlock) (desugarStr str)
+  
 identCases =
   [(jIdent "tame", dVarIdent "tame")]
 
@@ -65,6 +69,12 @@ blockStmtCases =
      noMods
      (dRefType $ dClassRefType $ dClassType [(dClassName "String", [])])
      (dVarIdent "l")])]
+
+desugarFirstStmtCases =
+  L.map (\(x, y) -> (x ++ ".java", JSuccess y))
+  [("Return", dReturn Nothing),
+   ("ReturnChar", dReturn $ Just $ dLit $ dChar 'a'),
+   ("PrimaryFieldAccess", dReturn $ Just $ dPrimaryFieldAccess dThis (dVarIdent "m"))]
 
 oneFieldClass =
   dClassDecl "FieldClass" [] Nothing [dVarDecl noMods (dPrimType $ dIntT) (dVarIdent "i")] [] []
