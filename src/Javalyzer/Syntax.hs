@@ -104,7 +104,7 @@ module Javalyzer.Syntax(JParseError,
                         JFormalParam,
                         JStmt,
                         JAnnotation,
-                        jId,
+                        jImportDecl,
                         JBlockStmt,
                         jMethodBody,
                         dsCompilationUnit,
@@ -148,10 +148,10 @@ data JPackageDecl = JPackageDecl JName
 
 jPackageDecl = JPackageDecl
 
-data JImportDecl = JID
+data JImportDecl = JImportDecl Bool JName Bool
                    deriving (Eq, Ord, Show)
 
-jId = JID
+jImportDecl = JImportDecl
 
 data JTypeDecl = JClassTypeDecl JClassDecl
                  deriving (Eq, Ord, Show)
@@ -440,16 +440,43 @@ jMarkerAnnotation = JMarkerAnnotation
 -- Desugaring conversion
 dsCompilationUnit :: JCompilationUnit -> JError DCompilationUnit
 dsCompilationUnit jcu@(JCompilationUnit pkg imps typeDecls) =
-  let classes = classDecls jcu in
+  let classes = classDecls jcu
+      pkgD = dsPackageDecl pkg
+      impsD = L.map dsImportDecl imps in
   do
     dsClasses <- mapM dsClassDecl classes
-    return $ dCompilationUnit Nothing [] [] dsClasses
+    return $ dCompilationUnit pkgD impsD [] dsClasses
+
+dsPackageDecl :: Maybe JPackageDecl -> Maybe DPackage
+dsPackageDecl Nothing = Nothing
+dsPackageDecl (Just (JPackageDecl (JName strs))) = Just $ dPackage $ L.map jIdentName strs
+
+dsImportDecl :: JImportDecl -> DImportDecl
+dsImportDecl (JImportDecl onlyStatic (JName strs) onlyOneName) =
+  dImportDecl onlyStatic onlyOneName $ L.map jIdentName strs
 
 dsClassDecl :: JClassDecl -> JError DClassDecl
 dsClassDecl cd = return $ dClassDecl "Empty" [] Nothing [] [] []
 
-dsBlockStmt :: Set DTypeParam -> JBlockStmt -> JError DStmt
-dsBlockStmt tvs (JLocalVars mods tp decls) = fail "dsBlockStmt not implemented"
+dsBlockStmt :: Set DTypeParam -> JBlockStmt -> JError [DStmt]
+dsBlockStmt tvs (JLocalVars mods tp decls) = do
+  tpD <- dsType tvs tp
+  liftM L.concat $ mapM (dsVarDecl mods tpD) decls
+dsBlockStmt tvs other = fail $ (show other) ++ " is not supported by dsBlockStmt"
+
+dsVarDecl :: [JModifier] -> DType -> JVarDecl -> JError [DStmt]
+dsVarDecl mods tp (JVarDecl vdid Nothing) = do
+  modsD <- dsMods mods
+  (vdidD, arrDepth) <- dsVarDeclId vdid
+  case arrDepth of
+    0 -> return [dLocalVarDecl modsD tp vdidD]
+    _ -> fail $ (show arrDepth) ++ " is not supported array depth in dsVarDecl"
+
+dsVarDecl mods tp other =
+  fail $ (show other) ++ " is not supported by dsVarDecl"
+
+dsVarDeclId :: JVarDeclId -> JError (DVarIdent, Int)
+dsVarDeclId (JVarId id) = return $ (dsVarIdent id, 0)
 
 dsVarIdent :: JIdent -> DVarIdent
 dsVarIdent (JIdent n) = dVarIdent n
@@ -458,6 +485,12 @@ dsTypeParam :: Set DTypeParam -> JTypeParam -> DTypeParam
 dsTypeParam existingTps (JTypeParam id refs) =
   let dRefs = L.map (dsRefType existingTps) refs in
   dTypeParam (jIdentName id) dRefs
+
+dsType :: Set DTypeParam -> JType -> JError DType
+dsType typeParams (JRefType rt) =
+  let rtD = dsRefType typeParams rt in
+  return $ dRefType rtD
+dsType typeParams tp = fail $ (show tp) ++ " is not supported by dsType"
 
 dsRefType :: Set DTypeParam -> JRefType -> DRefType
 dsRefType typeParams (JClassRefType ct) =
@@ -483,3 +516,8 @@ isTypeParam tps name =
 dsTypeArgument :: Set DTypeParam -> JTypeArgument -> DTypeArg
 dsTypeArgument typeParams (JActualType rt) =
   dActualType $ dsRefType typeParams rt
+
+dsMods :: [JModifier] -> JError Modifiers
+dsMods [] = return noMods
+dsMods other = fail $ (show other) ++ " is not supported by dsMods"
+

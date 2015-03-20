@@ -35,7 +35,9 @@ packageDeclToJ (PackageDecl n) = do
   return $ jPackageDecl nJ
 
 importToJ :: ImportDecl -> JError JImportDecl
-importToJ im = return jId
+importToJ (ImportDecl onlyStatic name onlyOne) = do
+  nameD <- nameToJ name
+  return $ jImportDecl onlyStatic nameD onlyOne
 
 typeDeclToJ :: TypeDecl -> JError JTypeDecl
 typeDeclToJ (ClassTypeDecl (ClassDecl mods id tps sup refs body)) = do

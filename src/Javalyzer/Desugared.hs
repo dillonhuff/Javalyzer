@@ -1,35 +1,34 @@
 module Javalyzer.Desugared(
-  DCompilationUnit,
-  dCompilationUnit,
-  DClassDecl,
-  dClassDecl,
-  DStmt,
-  DVarIdent,
-  dVarIdent,
-  DTypeParam,
-  dTypeParam,
-  dTypeParamName,
-  DRefType,
-  dClassRefType,
-  DClassType,
-  dClassType,
-  DTypeId,
-  dTypeVar,
-  dClassName,
-  DTypeArg,
-  dActualType) where
+  DCompilationUnit, dCompilationUnit,
+  DPackage, dPackage,
+  DImportDecl, dImportDecl,
+  DClassDecl, dClassDecl,
+  DStmt, dVarDeclSt, dLocalVarDecl,
+  DVarIdent, dVarIdent,
+  DTypeParam, dTypeParam, dTypeParamName,
+  DType, dRefType,
+  DRefType, dClassRefType,
+  DClassType, dClassType,
+  DTypeId, dTypeVar, dClassName,
+  DTypeArg, dActualType,
+  Modifiers, noMods) where
 
 data DCompilationUnit
-  = DCompilationUnit (Maybe DPackage) [DImport] [DInterfaceDecl] [DClassDecl]
+  = DCompilationUnit (Maybe DPackage) [DImportDecl] [DInterfaceDecl] [DClassDecl]
     deriving (Eq, Ord, Show)
 
 dCompilationUnit = DCompilationUnit
 
-data DPackage = DPackage [String]
-                deriving (Eq, Ord, Show)
+data DPackage
+  = DPackage [String]
+    deriving (Eq, Ord, Show)
 
-data DImport = DIP
-               deriving (Eq, Ord, Show)
+dPackage = DPackage
+
+data DImportDecl = DImportDecl Bool Bool [String]
+                   deriving (Eq, Ord, Show)
+
+dImportDecl = DImportDecl
 
 data DInterfaceDecl = DIL
                       deriving (Eq, Ord, Show)
@@ -71,8 +70,17 @@ data DConstructor
 data DBlock = DBlock
               deriving (Eq, Ord, Show)
 
-data DStmt = DLocalVarDecl DType DVarIdent
+data DStmt = DVarDeclSt DVarDecl
              deriving (Eq, Ord, Show)
+
+dVarDeclSt = DVarDeclSt
+
+dLocalVarDecl mods tp varName = dVarDeclSt $ dVarDecl mods tp varName
+
+data DVarDecl = DVarDecl Modifiers DType DVarIdent
+                deriving (Eq, Ord, Show)
+
+dVarDecl = DVarDecl
 
 data DFormalParam
   = DFormalParam DType DVarIdent
@@ -88,6 +96,8 @@ data DType
   = DPrimType
   | DRefType DRefType
     deriving (Eq, Ord, Show)
+
+dRefType = DRefType
 
 data DTypeParam
   = DTypeParam String [DRefType]
@@ -123,3 +133,9 @@ data DTypeArg
     deriving (Eq, Ord, Show)
 
 dActualType = DActualType
+
+data Modifiers
+  = Mods
+    deriving (Eq, Ord, Show)
+
+noMods = Mods

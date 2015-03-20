@@ -33,7 +33,32 @@ desugarCompUnitCases =
   L.map (\(x, y) -> (x ++ ".java", JSuccess y))
   [("Empty", dCompilationUnit Nothing [] [] []),
    ("EmptyClass",
-    dCompilationUnit Nothing [] [] [dClassDecl "Empty" [] Nothing [] [] []])]
+    dCompilationUnit Nothing [] [] [dClassDecl "Empty" [] Nothing [] [] []]),
+   ("PackageClass",
+    dCompilationUnit (Just (dPackage ["my", "pack", "is", "cool"])) [] [] [dClassDecl "Empty" [] Nothing [] [] []]),
+   ("ImportClass",
+    dCompilationUnit Nothing [dImportDecl False False ["some", "random", "imp"]] [] [dClassDecl "Empty" [] Nothing [] [] []])]
+
+
 
 blockStmtCases =
-  []
+  L.map (\(x, y) -> (x, JSuccess y))
+  [(jLocalVars
+    []
+    (jRefType $ jClassRefType $ jClassType [(jIdent "Object", [])])
+    [jVarDecl (jVarId $ jIdent "o") Nothing],
+    [dLocalVarDecl noMods (dRefType $ dClassRefType $ dClassType [(dClassName "Object", [])])
+    (dVarIdent "o")]),
+   (jLocalVars
+    []
+    (jRefType $ jClassRefType $ jClassType [(jIdent "String", [])])
+    [jVarDecl (jVarId $ jIdent "s") Nothing,
+     jVarDecl (jVarId $ jIdent "l") Nothing],
+    [dLocalVarDecl
+     noMods
+     (dRefType $ dClassRefType $ dClassType [(dClassName "String", [])])
+     (dVarIdent "s"),
+     dLocalVarDecl
+     noMods
+     (dRefType $ dClassRefType $ dClassType [(dClassName "String", [])])
+     (dVarIdent "l")])]
