@@ -5,13 +5,14 @@ module Javalyzer.Desugared(
   DInterfaceDecl,
   DClassDecl, dClassDecl,
   DMethod, dMethod,
-  DConstructor,
+  DConstructor, dConstructor,
+  DConstructorBody, dConstructorBody,
   DStmt, dVarDeclSt, dLocalVarDecl, dReturn, dExpSt,
   DExp, dLit, dPrimaryFieldAccess, dThis, dExpName,
   DName, dName,
   DLiteral, dChar,
   DVarDecl, dVarDecl,
-  DFormalParam,
+  DFormalParam, dFormalParam,
   DVarIdent, dVarIdent,
   DTypeParam, dTypeParam, dTypeParamName,
   DType, dRefType, dPrimType,
@@ -20,7 +21,10 @@ module Javalyzer.Desugared(
   DClassType, dClassType,
   DTypeId, dTypeVar, dClassName,
   DTypeArg, dActualType,
-  Modifiers, noMods,
+  Modifiers, noMods, privateMods, mods,
+  Access, public, private, protected,
+  ImplLevel, abstract, final, realExtendable,
+  nonStatic, static,
   firstBlock) where
 
 data DCompilationUnit
@@ -75,7 +79,7 @@ data DInstField
     deriving (Eq, Ord, Show)
 
 data DMethod
-  = DMethod Modifiers [DTypeParam] (Maybe DType) String [DFormalParam] [DException] [DStmt]
+  = DMethod Modifiers [DTypeParam] (Maybe DType) String [DVarDecl] [DException] [DStmt]
     deriving (Eq, Ord, Show)
 
 dMethod = DMethod
@@ -83,8 +87,16 @@ dMethod = DMethod
 methodBody (DMethod _ _ _ _ _ _ body) = body
 
 data DConstructor
-  = DC
+  = DConstructor Modifiers [DTypeParam] String [DVarDecl] [DException] DConstructorBody
     deriving (Eq, Ord, Show)
+
+dConstructor = DConstructor
+
+data DConstructorBody
+  = DConstructorBody (Maybe DStmt) [DStmt]
+    deriving (Eq, Ord, Show)
+
+dConstructorBody = DConstructorBody
 
 data DStmt
   = DVarDeclSt DVarDecl
@@ -129,8 +141,10 @@ data DVarDecl = DVarDecl Modifiers DType DVarIdent
 dVarDecl = DVarDecl
 
 data DFormalParam
-  = DFormalParam DType DVarIdent
+  = DFormalParam Modifiers DType DVarIdent
     deriving (Eq, Ord, Show)
+
+dFormalParam = DFormalParam
 
 data DVarIdent
   = DIdent String
@@ -187,10 +201,39 @@ data DTypeArg
 
 dActualType = DActualType
 
+type IsStatic = Bool
+
+static = True
+nonStatic = False
+
 data Modifiers
-  = Mods
+  = Modifiers Access ImplLevel IsStatic
     deriving (Eq, Ord, Show)
 
-noMods = Mods
+mods :: Access -> ImplLevel -> IsStatic -> Modifiers
+mods = Modifiers
+
+noMods = Modifiers public realExtendable False
+privateMods = Modifiers private realExtendable False
+
+data Access
+  = Public
+  | Private
+  | Protected
+    deriving (Eq, Ord, Show)
+
+private = Private
+protected = Protected
+public = Public
+
+data ImplLevel
+  = Abstract
+  | Final
+  | RealExtendable
+    deriving (Eq, Ord, Show)
+
+abstract = Abstract
+final = Final
+realExtendable = RealExtendable
 
 type DException = DRefType

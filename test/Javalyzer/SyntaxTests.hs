@@ -16,6 +16,7 @@ allSyntaxTests = do
   testFunctionFiles (testPath ++ "desugarTests/") desugarStr desugarCompUnitCases
   testFunction (dsBlockStmt typeParams) blockStmtCases
   testFunctionFiles (testPath ++ "desugarTests/") desugarFirstStmt desugarFirstStmtCases
+  testFunction dsMods modsCases
 
 desugarFirstStmt str = liftM (head . firstBlock) (desugarStr str)
   
@@ -45,7 +46,10 @@ desugarCompUnitCases =
    ("FieldClass",
     dCompilationUnit Nothing [] [] [oneFieldClass]),
    ("MethodClass",
-    dCompilationUnit Nothing [] [] [oneMethodClass])]
+    dCompilationUnit Nothing [] [] [oneMethodClass]),
+   ("ConstructorClass",
+    dCompilationUnit Nothing [] [] [oneConstructorClass])]
+
 
 
 blockStmtCases =
@@ -82,3 +86,11 @@ oneFieldClass =
 
 oneMethodClass =
   dClassDecl "MethodClass" [] Nothing [] [dMethod noMods [] Nothing "emptyMethod" [] [] []] []
+
+oneConstructorClass =
+  dClassDecl "ConstructorClass" [] Nothing [] [] [dConstructor (mods private realExtendable nonStatic) [] "ConstructorClass" [dVarDecl noMods (dRefType $ dClassRefType $ dClassType [(dClassName "Object", [])]) (dVarIdent "obj")] [] (dConstructorBody Nothing [])]
+
+modsCases =
+  L.map (\(x, y) -> (x, JSuccess y))
+  [([], noMods),
+   ([jPrivate], mods private realExtendable nonStatic)]

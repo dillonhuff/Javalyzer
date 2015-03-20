@@ -110,7 +110,8 @@ module Javalyzer.Syntax(JParseError,
                         dsCompilationUnit,
                         dsBlockStmt,
                         dsVarIdent,
-                        dsTypeParam) where
+                        dsTypeParam,
+                        dsMods) where
 
 import Control.Monad
 import Data.List as L
@@ -524,7 +525,10 @@ dsRetType tps (Just tp) = do
   return $ Just $ retType
 dsRetType tps Nothing = return Nothing
 
-dsFormalParam :: Set DTypeParam -> JFormalParam -> JError DFormalParam
+dsFormalParam :: Set DTypeParam -> JFormalParam -> JError DVarDecl
+dsFormalParam tps (JFormalParam mods tp False varDeclId) = do
+  res <- dsInstanceFieldDecl tps (jFieldDecl mods tp [jVarDecl varDeclId Nothing])
+  return $ head res
 dsFormalParam tps param = fail $ (show param) ++ " is not supported by dsFormalParam"
 
 dsMethodBody :: Set DTypeParam -> JMethodBody -> JError [DStmt]
@@ -538,7 +542,22 @@ dsInstanceFieldDecl tps (JFieldDecl mods tp decls) = do
   return decls
 
 dsConstructor :: Set DTypeParam -> JMemberDecl -> JError DConstructor
-dsConstructor tps constr = fail $ "dsConstructor not implemented"
+dsConstructor tps (JConstructorDecl mods conTps name args exps body) =
+  let conTpsD = L.map (dsTypeParam tps) conTps
+      expsD = L.map (dsRefType tps) exps
+      nameStr = jIdentName name
+      newTps = S.union (S.fromList conTpsD) tps in
+  do
+    modsD <- dsMods mods
+    argsD <- mapM (dsFormalParam newTps) args
+    bodyStmts <- dsConstructorBody newTps body
+    return $ dConstructor modsD conTpsD nameStr argsD expsD bodyStmts
+
+dsConstructorBody :: Set DTypeParam -> JConstructorBody -> JError DConstructorBody
+dsConstructorBody tps (JConstructorBody Nothing stmts) = do
+  stmtsD <- liftM L.concat $ mapM (dsBlockStmt tps) stmts
+  return $ dConstructorBody Nothing stmtsD
+dsConstructorBody tps other = fail $ (show other) ++ " is not supported by dsConstructorBody"
 
 dsBlockStmt :: Set DTypeParam -> JBlockStmt -> JError [DStmt]
 dsBlockStmt tvs (JLocalVars mods tp decls) = do
@@ -632,6 +651,31 @@ dsName :: JName -> DName
 dsName (JName strs) = dName $ L.map dsVarIdent strs
 
 dsMods :: [JModifier] -> JError Modifiers
-dsMods [] = return noMods
-dsMods other = fail $ (show other) ++ " is not supported by dsMods"
+dsMods mds = do
+  acc <- dsAccessMod mds
+  implLevel <- dsImplLevel mds
+  isStatic <- dsStaticMod mds
+  return $ mods acc implLevel isStatic
 
+dsAccessMod mods =
+  let accessMods = L.filter (\x -> or [x == jPublic, x == jPrivate, x == jProtected]) mods in
+  case length accessMods > 1 of
+    True -> fail $ (show mods) ++ " includes conflicting access modifiers"
+    False -> case length accessMods == 0 of
+      True -> return public
+      False -> case head accessMods of
+        JPublic -> return public
+        JPrivate -> return private
+        JProtected -> return protected
+
+dsImplLevel mods =
+  let implMods = L.filter (\x -> or [x == jAbstract, x == jFinal]) mods in
+  case length implMods > 1 of
+    True -> fail $ (show mods) ++ " includes conflicting access modifiers"
+    False -> case length implMods == 0 of
+      True -> return realExtendable
+      False -> case head implMods of
+        JFinal -> return final
+        JAbstract -> return abstract
+
+dsStaticMod mods = return $ L.elem jStatic mods
