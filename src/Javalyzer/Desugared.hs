@@ -2,12 +2,18 @@ module Javalyzer.Desugared(
   DCompilationUnit, dCompilationUnit,
   DPackage, dPackage,
   DImportDecl, dImportDecl,
+  DInterfaceDecl,
   DClassDecl, dClassDecl,
+  DMethod, dMethod,
+  DConstructor,
   DStmt, dVarDeclSt, dLocalVarDecl,
+  DVarDecl, dVarDecl,
+  DFormalParam,
   DVarIdent, dVarIdent,
   DTypeParam, dTypeParam, dTypeParamName,
-  DType, dRefType,
+  DType, dRefType, dPrimType,
   DRefType, dClassRefType,
+  DPrimType, dIntT,
   DClassType, dClassType,
   DTypeId, dTypeVar, dClassName,
   DTypeArg, dActualType,
@@ -38,7 +44,7 @@ data DClassDecl
     name :: String,
     typeParams :: [DTypeParam],
     super :: DRefType,
-    fields :: [DInstField],
+    fields :: [DVarDecl],
     methods :: [DMethod],
     constructors :: [DConstructor] }
   deriving (Eq, Ord, Show)
@@ -46,7 +52,7 @@ data DClassDecl
 dClassDecl :: String ->
               [DTypeParam] ->
               Maybe DRefType ->
-              [DInstField] ->
+              [DVarDecl] ->
               [DMethod] ->
               [DConstructor] ->
               DClassDecl
@@ -60,15 +66,14 @@ data DInstField
     deriving (Eq, Ord, Show)
 
 data DMethod
-  = DMethod [DTypeParam] (Maybe DType) String [DFormalParam] DBlock
+  = DMethod Modifiers [DTypeParam] (Maybe DType) String [DFormalParam] [DException] [DStmt]
     deriving (Eq, Ord, Show)
+
+dMethod = DMethod
 
 data DConstructor
   = DC
     deriving (Eq, Ord, Show)
-
-data DBlock = DBlock
-              deriving (Eq, Ord, Show)
 
 data DStmt = DVarDeclSt DVarDecl
              deriving (Eq, Ord, Show)
@@ -93,11 +98,12 @@ data DVarIdent
 dVarIdent = DIdent
 
 data DType
-  = DPrimType
+  = DPrimType DPrimType
   | DRefType DRefType
     deriving (Eq, Ord, Show)
 
 dRefType = DRefType
+dPrimType = DPrimType
 
 data DTypeParam
   = DTypeParam String [DRefType]
@@ -113,6 +119,12 @@ data DRefType
 dClassRefType = DClassRefType
 
 dObjectRef = dClassRefType $ dClassType [(dClassName "Object", [])]
+
+data DPrimType
+  = DIntT
+    deriving (Eq, Ord, Show)
+
+dIntT = DIntT
 
 data DClassType
   = DClassType [(DTypeId, [DTypeArg])]
@@ -139,3 +151,5 @@ data Modifiers
     deriving (Eq, Ord, Show)
 
 noMods = Mods
+
+type DException = DRefType

@@ -115,7 +115,6 @@ module Javalyzer.Syntax(JParseError,
 import Control.Monad
 import Data.List as L
 import Data.Set as S
-import Language.Java.Syntax
 
 import Javalyzer.Desugared
 import Javalyzer.Utils
@@ -133,7 +132,9 @@ jCompUnit = JCompilationUnit
 package (JCompilationUnit pkg _ _) = pkg
 imports (JCompilationUnit _ imps _) = imps
 decls (JCompilationUnit _ _ ds) = ds
+
 classDecls jcu = L.map getClassDecl $ L.filter isClassDecl $ decls jcu
+interfaceDecls jcu = L.map getInterfaceDecl $ L.filter isInterfaceDecl $ decls jcu
 
 isSingleClass (JCompilationUnit _ _ decls) =
   case length decls == 1 of
@@ -153,15 +154,22 @@ data JImportDecl = JImportDecl Bool JName Bool
 
 jImportDecl = JImportDecl
 
-data JTypeDecl = JClassTypeDecl JClassDecl
-                 deriving (Eq, Ord, Show)
+data JTypeDecl
+  = JClassTypeDecl JClassDecl
+  | JInterfaceTypeDecl JInterfaceDecl
+    deriving (Eq, Ord, Show)
 
 jClassTypeDecl mods name typeParams super refTypes body =
   JClassTypeDecl $ jClassDecl mods name typeParams super refTypes body
 
 isClassDecl (JClassTypeDecl _) = True
+isClassDecl _ = False
+
+isInterfaceDecl (JInterfaceTypeDecl _) = True
+isInterfaceDecl _ = False
 
 getClassDecl (JClassTypeDecl d) = d
+getInterfaceDecl (JInterfaceTypeDecl i) = i
 
 data JClassDecl = JClassDecl [JModifier] JIdent [JTypeParam] (Maybe JRefType) [JRefType] JClassBody
                   deriving (Eq, Ord, Show)
@@ -169,6 +177,9 @@ data JClassDecl = JClassDecl [JModifier] JIdent [JTypeParam] (Maybe JRefType) [J
 jClassDecl = JClassDecl
 className (JClassDecl _ id _ _ _ _) = jIdentName id
 classBody (JClassDecl _ _ _ _ _ b) = b
+
+data JInterfaceDecl = JInterfaceDecl
+                      deriving (Eq, Ord, Show)
 
 data JClassBody = JClassBody [JDecl]
                   deriving (Eq, Ord, Show)
@@ -190,6 +201,10 @@ declType (JMemberDecl _) = MEMBER
 
 jMemberDecl = JMemberDecl
 
+getMembers decls = L.map getMember $ L.filter (\d -> declType d == MEMBER) decls
+getMethods decls = L.filter (\m -> memberDeclType m == METHOD) $ getMembers decls
+getConstructors decls = L.filter (\m -> memberDeclType m == CONSTRUCTOR) $ getMembers decls
+getFieldDecls decls = L.filter (\m -> memberDeclType m == FIELD) $ getMembers decls
 
 data JMemberDecl
   = JMethodDecl [JModifier] [JTypeParam] (Maybe JType) JIdent [JFormalParam] [JExceptionType] JMethodBody
@@ -441,11 +456,13 @@ jMarkerAnnotation = JMarkerAnnotation
 dsCompilationUnit :: JCompilationUnit -> JError DCompilationUnit
 dsCompilationUnit jcu@(JCompilationUnit pkg imps typeDecls) =
   let classes = classDecls jcu
+      interfaces = interfaceDecls jcu
       pkgD = dsPackageDecl pkg
       impsD = L.map dsImportDecl imps in
   do
-    dsClasses <- mapM dsClassDecl classes
-    return $ dCompilationUnit pkgD impsD [] dsClasses
+    classesD <- mapM dsClassDecl classes
+    interfacesD <- mapM dsInterfaceDecl interfaces
+    return $ dCompilationUnit pkgD impsD interfacesD classesD
 
 dsPackageDecl :: Maybe JPackageDecl -> Maybe DPackage
 dsPackageDecl Nothing = Nothing
@@ -455,23 +472,92 @@ dsImportDecl :: JImportDecl -> DImportDecl
 dsImportDecl (JImportDecl onlyStatic (JName strs) onlyOneName) =
   dImportDecl onlyStatic onlyOneName $ L.map jIdentName strs
 
+dsInterfaceDecl :: JInterfaceDecl -> JError DInterfaceDecl
+dsInterfaceDecl int = fail "dsInterfaceDecl is not implemented"
+
 dsClassDecl :: JClassDecl -> JError DClassDecl
-dsClassDecl cd = return $ dClassDecl "Empty" [] Nothing [] [] []
+dsClassDecl (JClassDecl mods id tps super refs body) = do
+  modsD <- dsMods mods
+  let name = jIdentName id
+      tpsD = L.map (dsTypeParam S.empty) tps
+      refsD = L.map (dsRefType S.empty) refs
+      superD = dsSuperType super in
+   do
+     (fields, methods, constructors) <- dsClassBody (S.fromList tpsD) body
+     return $ dClassDecl name tpsD superD fields methods constructors
+
+dsSuperType :: Maybe JRefType -> Maybe DRefType
+dsSuperType (Just rt) = Just $ dsRefType S.empty rt
+dsSuperType Nothing = Nothing
+
+dsClassBody :: Set DTypeParam ->
+               JClassBody ->
+               JError ([DVarDecl], [DMethod], [DConstructor])
+dsClassBody tps (JClassBody decls) =
+  let methods = getMethods decls
+      fieldDecls = getFieldDecls decls
+      constructors = getConstructors decls in
+  do
+    methodsD <- mapM (dsMethod tps) methods
+    fieldDeclsD <- liftM L.concat $ mapM (dsInstanceFieldDecl tps) fieldDecls
+    constructorsD <- mapM (dsConstructor tps) constructors
+    return $ (fieldDeclsD, methodsD, constructorsD)
+
+dsMethod :: Set DTypeParam -> JMemberDecl -> JError DMethod
+dsMethod tps (JMethodDecl mods methTps retType name args exps body) =
+  let methTpsD = L.map (dsTypeParam tps) methTps
+      expsD = L.map (dsRefType tps) exps in
+  do
+    modsD <- dsMods mods
+
+    let nameStr = jIdentName name
+        newTps = S.union (S.fromList methTpsD) tps in
+      do
+        retTypeD <- dsRetType newTps retType
+        argsD <- mapM (dsFormalParam newTps) args
+        bodyStmts <- dsMethodBody newTps body
+        return $ dMethod modsD methTpsD retTypeD nameStr argsD expsD bodyStmts
+
+dsRetType :: Set DTypeParam -> Maybe JType -> JError (Maybe DType)
+dsRetType tps (Just tp) = do
+  retType <- dsType tps tp
+  return $ Just $ retType
+dsRetType tps Nothing = return Nothing
+
+dsFormalParam :: Set DTypeParam -> JFormalParam -> JError DFormalParam
+dsFormalParam tps param = fail $ (show param) ++ " is not supported by dsFormalParam"
+
+dsMethodBody :: Set DTypeParam -> JMethodBody -> JError [DStmt]
+dsMethodBody tps (JMethodBody (Just (JBlock stmts))) =
+  liftM L.concat $ mapM (dsBlockStmt tps) stmts
+
+dsInstanceFieldDecl :: Set DTypeParam -> JMemberDecl -> JError [DVarDecl]
+dsInstanceFieldDecl tps (JFieldDecl mods tp decls) = do
+  tpD <- dsType tps tp
+  decls <- liftM L.concat $ mapM (dsVarDecl mods tpD) decls
+  return decls
+
+dsConstructor :: Set DTypeParam -> JMemberDecl -> JError DConstructor
+dsConstructor tps constr = fail $ "dsConstructor not implemented"
 
 dsBlockStmt :: Set DTypeParam -> JBlockStmt -> JError [DStmt]
 dsBlockStmt tvs (JLocalVars mods tp decls) = do
   tpD <- dsType tvs tp
-  liftM L.concat $ mapM (dsVarDecl mods tpD) decls
+  liftM L.concat $ mapM (dsVarDeclStmt mods tpD) decls
 dsBlockStmt tvs other = fail $ (show other) ++ " is not supported by dsBlockStmt"
 
-dsVarDecl :: [JModifier] -> DType -> JVarDecl -> JError [DStmt]
+dsVarDeclStmt :: [JModifier] -> DType -> JVarDecl -> JError [DStmt]
+dsVarDeclStmt mods tp vdecl = do
+  vdeclD <- dsVarDecl mods tp vdecl
+  return $ L.map dVarDeclSt vdeclD
+
+dsVarDecl :: [JModifier] -> DType -> JVarDecl -> JError [DVarDecl]
 dsVarDecl mods tp (JVarDecl vdid Nothing) = do
   modsD <- dsMods mods
   (vdidD, arrDepth) <- dsVarDeclId vdid
   case arrDepth of
-    0 -> return [dLocalVarDecl modsD tp vdidD]
+    0 -> return [dVarDecl modsD tp vdidD]
     _ -> fail $ (show arrDepth) ++ " is not supported array depth in dsVarDecl"
-
 dsVarDecl mods tp other =
   fail $ (show other) ++ " is not supported by dsVarDecl"
 
@@ -490,7 +576,8 @@ dsType :: Set DTypeParam -> JType -> JError DType
 dsType typeParams (JRefType rt) =
   let rtD = dsRefType typeParams rt in
   return $ dRefType rtD
-dsType typeParams tp = fail $ (show tp) ++ " is not supported by dsType"
+dsType typeParams (JPrimType pt) =
+  return $ dPrimType $ dsPrimType pt
 
 dsRefType :: Set DTypeParam -> JRefType -> DRefType
 dsRefType typeParams (JClassRefType ct) =
@@ -516,6 +603,9 @@ isTypeParam tps name =
 dsTypeArgument :: Set DTypeParam -> JTypeArgument -> DTypeArg
 dsTypeArgument typeParams (JActualType rt) =
   dActualType $ dsRefType typeParams rt
+
+dsPrimType :: JPrimType -> DPrimType
+dsPrimType JIntT = dIntT
 
 dsMods :: [JModifier] -> JError Modifiers
 dsMods [] = return noMods

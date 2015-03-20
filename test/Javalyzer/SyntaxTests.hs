@@ -37,8 +37,11 @@ desugarCompUnitCases =
    ("PackageClass",
     dCompilationUnit (Just (dPackage ["my", "pack", "is", "cool"])) [] [] [dClassDecl "Empty" [] Nothing [] [] []]),
    ("ImportClass",
-    dCompilationUnit Nothing [dImportDecl False False ["some", "random", "imp"]] [] [dClassDecl "Empty" [] Nothing [] [] []])]
-
+    dCompilationUnit Nothing [dImportDecl False False ["some", "random", "imp"]] [] [dClassDecl "Empty" [] Nothing [] [] []]),
+   ("FieldClass",
+    dCompilationUnit Nothing [] [] [oneFieldClass]),
+   ("MethodClass",
+    dCompilationUnit Nothing [] [] [oneMethodClass])]
 
 
 blockStmtCases =
@@ -62,3 +65,9 @@ blockStmtCases =
      noMods
      (dRefType $ dClassRefType $ dClassType [(dClassName "String", [])])
      (dVarIdent "l")])]
+
+oneFieldClass =
+  dClassDecl "FieldClass" [] Nothing [dVarDecl noMods (dPrimType $ dIntT) (dVarIdent "i")] [] []
+
+oneMethodClass =
+  dClassDecl "MethodClass" [] Nothing [] [dMethod noMods [] Nothing "emptyMethod" [] [] []] []

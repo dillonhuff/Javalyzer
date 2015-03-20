@@ -1,0 +1,5 @@
+class MethodClass {
+    void emptyMethod() {
+
+    }
+}

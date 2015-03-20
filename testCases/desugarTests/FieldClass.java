@@ -1,0 +1,3 @@
+class FieldClass {
+    int i;
+}
