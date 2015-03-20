@@ -7,7 +7,8 @@ module Javalyzer.Desugared(
   DMethod, dMethod,
   DConstructor,
   DStmt, dVarDeclSt, dLocalVarDecl, dReturn, dExpSt,
-  DExp, dLit, dPrimaryFieldAccess, dThis,
+  DExp, dLit, dPrimaryFieldAccess, dThis, dExpName,
+  DName, dName,
   DLiteral, dChar,
   DVarDecl, dVarDecl,
   DFormalParam,
@@ -101,12 +102,20 @@ dLocalVarDecl mods tp varName = dVarDeclSt $ dVarDecl mods tp varName
 data DExp
   = DLit DLiteral
   | DPrimaryFieldAccess DExp DVarIdent
+  | DExpName DName
   | DThis
     deriving (Eq, Ord, Show)
 
 dLit = DLit
 dPrimaryFieldAccess = DPrimaryFieldAccess
 dThis = DThis
+dExpName = DExpName
+
+data DName
+  = DName [DVarIdent]
+    deriving (Eq, Ord, Show)
+
+dName = DName
 
 data DLiteral
   = DChar Char

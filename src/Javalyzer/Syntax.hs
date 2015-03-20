@@ -558,6 +558,7 @@ dsStmt tvs other = fail $ (show other) ++ " is not yet supported by dsStmt"
 dsExp :: Set DTypeParam -> JExp -> JError DExp
 dsExp tvs JThis = return dThis
 dsExp tvs (JLit l) = return $ dLit $ dsLiteral l
+dsExp tvs (JExpName n) = return $ dExpName $ dsName n
 dsExp tvs (JFieldAccess (JPrimaryFieldAccess exp id)) = do
   expD <- dsExp tvs exp
   return $ dPrimaryFieldAccess expD (dsVarIdent id)
@@ -626,6 +627,9 @@ dsTypeArgument typeParams (JActualType rt) =
 
 dsPrimType :: JPrimType -> DPrimType
 dsPrimType JIntT = dIntT
+
+dsName :: JName -> DName
+dsName (JName strs) = dName $ L.map dsVarIdent strs
 
 dsMods :: [JModifier] -> JError Modifiers
 dsMods [] = return noMods

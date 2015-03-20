@@ -74,7 +74,8 @@ desugarFirstStmtCases =
   L.map (\(x, y) -> (x ++ ".java", JSuccess y))
   [("Return", dReturn Nothing),
    ("ReturnChar", dReturn $ Just $ dLit $ dChar 'a'),
-   ("PrimaryFieldAccess", dReturn $ Just $ dPrimaryFieldAccess dThis (dVarIdent "m"))]
+   ("PrimaryFieldAccess", dReturn $ Just $ dPrimaryFieldAccess dThis (dVarIdent "m")),
+   ("ExpName", dReturn $ Just $ dExpName $ dName [dVarIdent "nope"])]
 
 oneFieldClass =
   dClassDecl "FieldClass" [] Nothing [dVarDecl noMods (dPrimType $ dIntT) (dVarIdent "i")] [] []
