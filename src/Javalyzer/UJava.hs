@@ -7,9 +7,11 @@ module Javalyzer.UJava(
   Field, field, formalParamDecl,
   Method, method, instructions, formalParams, fieldDecl,
   Instruction, instrType, asg, fieldType, fieldName, lhs, rhs,
-  Lhs, vLhs, fLhs,
-  Exp, fieldAcc, expType, objAccessedName, fieldAccessedName, intLit, newInst,
+  Lhs, vLhs, fLhs, lhsType, getFieldAccFromLhs,
+  LhsType(..), 
+  Exp, expType, intLit, newInst, fieldAccExp, getFieldAccFromExp,
   ExpType(..),
+  FieldAccess, objAccessedName, fieldAccessedName,
   InstrType(..),
   Type, cRef, primInt, isRef,
   Context) where
@@ -75,22 +77,34 @@ rhs (Assign _ r) = r
 
 data Lhs
   = VarLhs String
-  | FieldAcc String String
+  | FA FieldAccess
     deriving (Eq, Ord, Show)
 
 vLhs str = VarLhs str
-fLhs objName fieldName = FieldAcc objName fieldName
+fLhs objName fieldName = FA $ fieldAccess objName fieldName
+
+getFieldAccFromLhs (FA acc) = acc
+
+lhsType (VarLhs _) = LVAR
+lhsType (FA _) = LFIELDACCESS
+
+data LhsType
+  = LFIELDACCESS
+  | LVAR
+    deriving (Eq, Ord, Show)
 
 data Exp
-  = FieldAccess String String
+  = EFieldAcc FieldAccess
   | Literal Lit
   | NewInst String
     deriving (Eq, Ord, Show)
 
-fieldAcc = FieldAccess
+fieldAccExp objName fieldName = EFieldAcc $ fieldAccess objName fieldName
 lit = Literal
 intLit = lit . int
 newInst = NewInst
+
+getFieldAccFromExp (EFieldAcc acc) = acc
 
 data ExpType
   = FIELDACCESS
@@ -98,9 +112,15 @@ data ExpType
   | NEWINST
     deriving (Eq, Ord, Show)
 
-expType (FieldAccess _ _) = FIELDACCESS
+expType (EFieldAcc _) = FIELDACCESS
 expType (Literal _) = LITERAL
 expType (NewInst _) = NEWINST
+
+data FieldAccess
+  = FieldAccess String String
+    deriving (Eq, Ord, Show)
+
+fieldAccess = FieldAccess
 
 objAccessedName (FieldAccess o _) = o
 fieldAccessedName (FieldAccess _ f) = f

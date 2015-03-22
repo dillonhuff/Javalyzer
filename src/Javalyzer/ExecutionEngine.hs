@@ -5,12 +5,13 @@ import Data.List as L
 
 import Javalyzer.Store
 import Javalyzer.UJava
+import Javalyzer.Utils
 
-symbolicMethodExec :: (Store -> Instruction -> Bool) ->
+symbolicMethodExec :: (Store -> Instruction -> JError Bool) ->
                       ClassHierarchy ->
                       Class ->
                       Method ->
-                      Bool
+                      JError Bool
 symbolicMethodExec errTest h c m =
   symbolicExecInstrs errTest h emptyStore methodInstrs
   where
@@ -18,21 +19,22 @@ symbolicMethodExec errTest h c m =
     thisParamDecl = thisDecl c
     methodInstrs = fpDecls ++ thisParamDecl ++ (instructions m)
 
-symbolicExecInstrs :: (Store -> Instruction -> Bool) ->
+symbolicExecInstrs :: (Store -> Instruction -> JError Bool) ->
                       ClassHierarchy ->
                       Store ->
                       [Instruction] ->
-                      Bool
-symbolicExecInstrs errTest h s [] = False
-symbolicExecInstrs errTest h s (i:is) =
-  case errTest s i of
-    True -> True
+                      JError Bool
+symbolicExecInstrs errTest h s [] = JSuccess False
+symbolicExecInstrs errTest h s (i:is) = do
+  testRes <- errTest s i
+  case testRes of
+    True -> JSuccess True
     False -> case instrType i of
       FIELDDECL -> execFieldDecl errTest h s (fieldType i) (fieldName i) is
       ASSIGN -> execAssign errTest h s (lhs i) (rhs i) is
 
 execFieldDecl errTest h s fieldType fieldName is =
-  symbolicExecInstrs errTest h (addStoreValue fieldType fieldName s) is
+  symbolicExecInstrs errTest h (addDefaultStoreValue fieldType fieldName s) is
 
 execAssign errTest h s l r is =
   let expRes = symbolicExecExp h s r in
@@ -41,5 +43,5 @@ execAssign errTest h s l r is =
 symbolicExecExp :: ClassHierarchy -> Store -> Exp -> StoreValue
 symbolicExecExp c s exp =
   case expType exp of
-    FIELDACCESS -> getField (objAccessedName exp) (fieldAccessedName exp) s
+    FIELDACCESS -> error "symbolicExecExp is not implemented"--getField (objAccessedName exp) (fieldAccessedName exp) s
     _ -> error $ (show exp) ++ " is not yet supported by symbolicExecExp"
