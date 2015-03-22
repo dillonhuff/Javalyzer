@@ -79,7 +79,8 @@ desugarFirstStmtCases =
   [("Return", dReturn Nothing),
    ("ReturnChar", dReturn $ Just $ dLit $ dChar 'a'),
    ("PrimaryFieldAccess", dReturn $ Just $ dPrimaryFieldAccess dThis (dVarIdent "m")),
-   ("ExpName", dReturn $ Just $ dExpName $ dName [dVarIdent "nope"])]
+   ("ExpName", dReturn $ Just $ dExpName $ dName [dVarIdent "nope"]),
+   ("AssignExp", dExpSt $ dAssign (]
 
 oneFieldClass =
   dClassDecl "FieldClass" [] Nothing [dVarDecl noMods (dPrimType $ dIntT) (dVarIdent "i")] [] []
