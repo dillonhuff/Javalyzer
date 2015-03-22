@@ -7,11 +7,11 @@ module Javalyzer.UJava(
   Field, field, formalParamDecl,
   Method, method, instructions, formalParams, fieldDecl,
   Instruction, instrType, asg, fieldType, fieldName, lhs, rhs,
-  Lhs, vLhs,
-  Exp, fieldAcc, expType, objAccessedName, fieldAccessedName,
+  Lhs, vLhs, fLhs,
+  Exp, fieldAcc, expType, objAccessedName, fieldAccessedName, intLit, newInst,
   ExpType(..),
   InstrType(..),
-  Type, cRef,
+  Type, cRef, primInt, isRef,
   Context) where
 
 data ClassHierarchy = CL
@@ -75,40 +75,60 @@ rhs (Assign _ r) = r
 
 data Lhs
   = VarLhs String
+  | FieldAcc String String
     deriving (Eq, Ord, Show)
 
 vLhs str = VarLhs str
+fLhs objName fieldName = FieldAcc objName fieldName
 
 data Exp
   = FieldAccess String String
-  | Literal
+  | Literal Lit
+  | NewInst String
     deriving (Eq, Ord, Show)
 
 fieldAcc = FieldAccess
+lit = Literal
+intLit = lit . int
+newInst = NewInst
 
 data ExpType
   = FIELDACCESS
   | LITERAL
+  | NEWINST
     deriving (Eq, Ord, Show)
 
 expType (FieldAccess _ _) = FIELDACCESS
-expType Literal = LITERAL
+expType (Literal _) = LITERAL
+expType (NewInst _) = NEWINST
 
 objAccessedName (FieldAccess o _) = o
 fieldAccessedName (FieldAccess _ f) = f
+
+data Lit
+  = Int Integer
+    deriving (Eq, Ord, Show)
+
+int = Int
 
 data Type
   = Prim PrimType
   | ClassRef String
     deriving (Eq, Ord, Show)
 
+prim = Prim
+primInt = prim intT
 cRef :: String -> Type
 cRef = ClassRef
+
+isRef (ClassRef _) = True
+isRef _ = False
 
 data PrimType
   = IntT
     deriving (Eq, Ord, Show)
 
+intT = IntT
 objectClass = uClass "Object" [] []
 
 data Context

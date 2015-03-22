@@ -26,4 +26,15 @@ nullObjMethod =
          fieldDecl (cRef "Object") "p",
          asg (vLhs "p") (fieldAcc "t" "m")]
 
-noNullDerefClass = uClass "NoDeref" [field (cRef "Object") "m"] []
+noNullDerefClass = uClass "NoDeref" [field primInt "m"] [noNullMethod]
+
+noNullMethod =
+  method
+        Nothing
+        "noNull"
+        []
+        [fieldDecl primInt "t",
+         fieldDecl (cRef "NoDeref") "noD",
+         asg (vLhs "noD") (newInst "NoDeref"),
+         asg (fLhs "noD" "m") (intLit 12),
+         asg (vLhs "t") (fieldAcc "noD" "m")]

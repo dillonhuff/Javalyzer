@@ -23,5 +23,5 @@ nullPtrException store i =
 isNullDereference :: Exp -> Store -> Bool
 isNullDereference exp s =
   case expType exp of
-    FIELDACCESS -> True
+    FIELDACCESS -> isNull (objAccessedName exp) s
     _ -> False
