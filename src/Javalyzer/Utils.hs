@@ -1,4 +1,5 @@
 module Javalyzer.Utils(JError(..),
+                       success,
                        isFail) where
 
 import Control.Applicative
@@ -11,6 +12,8 @@ data JError a
 
 isFail (JFail _) = True
 isFail _ = False
+
+success = JSuccess
 
 instance (Show a) => (Show (JError a)) where
   show (JFail str) = "JError: " ++ str

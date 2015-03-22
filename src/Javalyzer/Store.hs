@@ -1,5 +1,5 @@
 module Javalyzer.Store(
-  Store, emptyStore, addDefaultStoreValue, getNameValue, setNameValue, setValue, isNull,
+  Store, emptyStore, addDefaultStoreValue, getNameValue, setNameValue, setLhsValue, isNull, createNewInstanceOfClass,
   StoreValue) where
 
 import Data.Map as M
@@ -32,10 +32,13 @@ setNameValue name val s = do
   ind <- getInd name s
   return $ setInd ind val s
 
-setValue :: Lhs -> StoreValue -> Store -> Store
-setValue l v s =
+createNewInstanceOfClass :: String -> ClassHierarchy -> Store -> (StoreValue, Store)
+createNewInstanceOfClass className h s = error "createNewInstance is not yet implemented"
+
+setLhsValue :: Lhs -> StoreValue -> Store -> JError Store
+setLhsValue l v s =
   case lhsType l of
-    LFIELDACCESS -> error "setValue not implemented" --setFieldOjbField (getFieldAccFromLhs l) v s
+    LFIELDACCESS -> setObjField (getFieldAccFromLhs l) v s
     _ -> error $ (show l) ++ " " ++ (show v) ++ "setValue not implemented"
 
 getInd :: String -> Store -> JError Int
@@ -54,18 +57,13 @@ indexValue index s@(Store _ indsToVals _) =
     Just v -> JSuccess v
     Nothing -> fail $ (show index) ++ " is not defined in store " ++ show s
 
-setObjField:: FieldAccess -> StoreValue -> Store -> Store
-setObjField fa val store = error "setObjField not implemented"
-{-  case getInd objName store of
-    Just ind -> setClassField ind objFieldName val store
-    Nothing -> error $ objName ++ " with field " ++ objFieldName ++ " does not exist in store " ++ show store-}
+setObjField:: FieldAccess -> StoreValue -> Store -> JError Store
+setObjField fa val store = do
+  objRef <- getNameValue (objAccessedName fa) store
+  oldObj <- indexValue (referencedIndex objRef) store
+  let newObj = replaceObjField (fieldAccessedName fa) val oldObj in
+    return $ setInd (referencedIndex objRef) newObj store
 
-setClassField :: Int -> String -> StoreValue -> Store -> Store
-setClassField classLoc fieldName val s = error "setClassField"
---  case getVal classLoc s of
---    Just obj@(Obj className fields) -> error "setClassField not implemented"--setInd classLoc (setField fieldName val obj) s
---    _ -> error $ (show classLoc) ++ " either is not a class or does not exist in " ++ (show s)
-  
 getField :: String -> String -> Store -> StoreValue
 getField objN fName s@(Store nameVals sValRefs _) =
   case M.lookup objN nameVals of
@@ -76,7 +74,7 @@ getField objN fName s@(Store nameVals sValRefs _) =
 
 data StoreValue
   = ClassRef Int
-  | Obj String [Field]
+  | Obj String (Map String StoreValue)
   | Null
     deriving (Eq, Ord, Show)
 
@@ -89,7 +87,12 @@ isStoreValueNull :: StoreValue -> Bool
 isStoreValueNull Null = True
 isStoreValueNull _ = False
 
+referencedIndex (ClassRef ind) = ind
+
 defaultValue :: Type -> StoreValue
 defaultValue tp = case isRef tp of
   True -> Null
   False -> error $ "No support for primitive default values yet"
+
+replaceObjField :: String -> StoreValue -> StoreValue -> StoreValue
+replaceObjField fieldName newVal oldObj = error $ "not implemented"

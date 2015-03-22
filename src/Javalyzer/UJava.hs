@@ -9,7 +9,7 @@ module Javalyzer.UJava(
   Instruction, instrType, asg, fieldType, fieldName, lhs, rhs,
   Lhs, vLhs, fLhs, lhsType, getFieldAccFromLhs,
   LhsType(..), 
-  Exp, expType, intLit, newInst, fieldAccExp, getFieldAccFromExp,
+  Exp, expType, intLit, newInst, fieldAccExp, getFieldAccFromExp, getClassNameFromExp,
   ExpType(..),
   FieldAccess, objAccessedName, fieldAccessedName,
   InstrType(..),
@@ -105,6 +105,7 @@ intLit = lit . int
 newInst = NewInst
 
 getFieldAccFromExp (EFieldAcc acc) = acc
+getClassNameFromExp (NewInst n) = n
 
 data ExpType
   = FIELDACCESS

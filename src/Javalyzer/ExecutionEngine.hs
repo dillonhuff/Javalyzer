@@ -36,12 +36,14 @@ symbolicExecInstrs errTest h s (i:is) = do
 execFieldDecl errTest h s fieldType fieldName is =
   symbolicExecInstrs errTest h (addDefaultStoreValue fieldType fieldName s) is
 
-execAssign errTest h s l r is =
-  let expRes = symbolicExecExp h s r in
-  symbolicExecInstrs errTest h (setValue l expRes s) is
+execAssign errTest h s l r is = do
+  (expRes, sRes) <- symbolicExecExp h s r
+  newStore <- setLhsValue l expRes sRes
+  symbolicExecInstrs errTest h newStore is
 
-symbolicExecExp :: ClassHierarchy -> Store -> Exp -> StoreValue
+symbolicExecExp :: ClassHierarchy -> Store -> Exp -> JError (StoreValue, Store)
 symbolicExecExp c s exp =
   case expType exp of
     FIELDACCESS -> error "symbolicExecExp is not implemented"--getField (objAccessedName exp) (fieldAccessedName exp) s
+    NEWINST -> success $ createNewInstanceOfClass (getClassNameFromExp exp) c s
     _ -> error $ (show exp) ++ " is not yet supported by symbolicExecExp"
