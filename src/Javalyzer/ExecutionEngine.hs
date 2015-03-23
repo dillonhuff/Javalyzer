@@ -53,4 +53,4 @@ symbolicExecExp c s exp =
     VRHS -> do
       val <- getNameValue (getVarFromExp exp) s
       return (val, s)
---    _ -> error $ (show exp) ++ " is not yet supported by symbolicExecExp"
+    NULL -> return (nullValue, s)

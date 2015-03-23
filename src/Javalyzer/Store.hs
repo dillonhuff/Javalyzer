@@ -1,6 +1,6 @@
 module Javalyzer.Store(
   Store, emptyStore, addDefaultStoreValue, getNameValue, setNameValue, setLhsValue, isNull, createNewInstanceOfClass, createNewLiteral, getObjField,
-  StoreValue) where
+  StoreValue, nullValue) where
 
 import Data.List as L
 import Data.Map as M
@@ -106,6 +106,7 @@ data StoreValue
 classRef = ClassRef
 obj = Obj
 pInt = PrimInt
+nullValue = Null
 
 createNewLiteral :: Lit -> StoreValue
 createNewLiteral l =

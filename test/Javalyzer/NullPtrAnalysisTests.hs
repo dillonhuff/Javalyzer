@@ -14,14 +14,16 @@ allNullPtrAnalysisTests =
 classH = newClassHierarchy [objectClass,
                             tinyClass,
                             noNullDerefClass,
-                            linkedListDerefClass]
+                            linkedListDerefClass,
+                            nullAssignClass]
 
 nullPtrCases =
   L.map (\(x, y) -> (x, JSuccess y))
   [(objectClass, False),
    (tinyClass, True),
    (noNullDerefClass, False),
-   (linkedListDerefClass, True)]
+   (linkedListDerefClass, True),
+   (nullAssignClass, True)]
 
 tinyClass = uClass "Tiny" [field (cRef "Object") "m"] [nullObjMethod]
 
@@ -68,3 +70,16 @@ linkDeref =
          asg (vLhs "l4") (fieldAccExp "l4" "next"),
          asg (vLhs "l4") (fieldAccExp "l4" "next"),
          asg (vLhs "l4") (fieldAccExp "l4" "next")]
+
+nullAssignClass = uClass "NullAssign" [] [nullAsgMeth]
+
+nullAsgMeth =
+  method
+        Nothing
+        "nullAsg"
+        []
+        [fieldDeclInstr (cRef "LinkedList") "myL",
+         asg (vLhs "myL") (newInst "LinkedList"),
+         asg (vLhs "myL") nullExp,
+         fieldDeclInstr (cRef "LinkedList") "otherL",
+         asg (vLhs "otherL") (fieldAccExp "myL" "next")]

@@ -30,3 +30,4 @@ isNullDereference exp s =
     NEWINST -> return False
     LITERAL -> return False
     VRHS -> return False
+    NULL -> return False

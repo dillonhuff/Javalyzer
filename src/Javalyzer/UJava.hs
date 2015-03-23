@@ -7,7 +7,7 @@ module Javalyzer.UJava(
   Instruction, instrType, asg, lhs, rhs, getFieldDeclFromInstr, fieldDeclInstr,
   Lhs, vLhs, fLhs, lhsType, getFieldAccFromLhs, getNameFromLhs,
   LhsType(..), 
-  Exp, expType, intLit, newInst, fieldAccExp, getFieldAccFromExp, getClassNameFromExp, getLiteralFromExp, vRhs, getVarFromExp,
+  Exp, expType, intLit, newInst, fieldAccExp, getFieldAccFromExp, getClassNameFromExp, getLiteralFromExp, vRhs, getVarFromExp, nullExp,
   ExpType(..),
   FieldAccess, objAccessedName, fieldAccessedName,
   InstrType(..),
@@ -121,6 +121,7 @@ data Exp
   | Literal Lit
   | VRhs String
   | NewInst String
+  | NullExp
     deriving (Eq, Ord, Show)
 
 fieldAccExp objName fieldName = EFieldAcc $ fieldAccess objName fieldName
@@ -128,6 +129,7 @@ vRhs = VRhs
 lit = Literal
 intLit = lit . int
 newInst = NewInst
+nullExp = NullExp
 
 getVarFromExp (VRhs n) = n
 getLiteralFromExp (Literal l) = l
@@ -139,12 +141,14 @@ data ExpType
   | LITERAL
   | NEWINST
   | VRHS
+  | NULL
     deriving (Eq, Ord, Show)
 
 expType (EFieldAcc _) = FIELDACCESS
 expType (Literal _) = LITERAL
 expType (NewInst _) = NEWINST
 expType (VRhs _) = VRHS
+expType NullExp = NULL
 
 data FieldAccess
   = FieldAccess String String
