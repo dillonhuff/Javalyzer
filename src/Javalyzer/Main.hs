@@ -3,10 +3,11 @@ module Javalyzer.Main(main) where
 import Data.List as L
 import Data.Time.LocalTime
 
-import Javalyzer.Desugared
+
 import Javalyzer.FileManipulation
-import Javalyzer.Parser
-import Javalyzer.Syntax
+import Javalyzer.Java.Desugared
+import Javalyzer.Java.Parser
+import Javalyzer.Java.Syntax
 import Javalyzer.Utils
 
 --projectDir="/Users/dillon/javaTestProjects/main/apisupport.osgidemo/osgidemo/showbundles/test/unit/src/org/netbeans/demo/osgi/showbundles/"
@@ -43,6 +44,7 @@ printCoverageSummary startTime endTime res =
     putStrLn "====================================================="
 
 parseLog :: JError DCompilationUnit -> FilePath -> String
-parseLog (JSuccess unit) path = "\n\n\n" ++ path ++
-         "\n**************** Parse Succeeded **********************\n\n\n"
-parseLog (JFail failMsg) path = "\n" ++ path ++ "\n" ++ failMsg ++ "\n"
+parseLog parseRes path =
+  case isFail parseRes of
+    True -> "\n" ++ path ++ "\n" ++ show parseRes ++ "\n"
+    False -> "\n**************** Parse Succeeded **********************\n\n\n"
