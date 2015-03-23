@@ -7,10 +7,12 @@ module Javalyzer.UJava(
   Instruction, instrType, asg, lhs, rhs, getFieldDeclFromInstr, fieldDeclInstr,
   Lhs, vLhs, fLhs, lhsType, getFieldAccFromLhs, getNameFromLhs,
   LhsType(..), 
-  Exp, expType, intLit, newInst, fieldAccExp, getFieldAccFromExp, getClassNameFromExp, 
+  Exp, expType, intLit, newInst, fieldAccExp, getFieldAccFromExp, getClassNameFromExp, getLiteralFromExp,
   ExpType(..),
   FieldAccess, objAccessedName, fieldAccessedName,
   InstrType(..),
+  Lit, getIntVal, litType,
+  LitType(..),
   Type, cRef, primInt, isRef) where
 
 import Control.Monad
@@ -125,6 +127,7 @@ lit = Literal
 intLit = lit . int
 newInst = NewInst
 
+getLiteralFromExp (Literal l) = l
 getFieldAccFromExp (EFieldAcc acc) = acc
 getClassNameFromExp (NewInst n) = n
 
@@ -153,6 +156,14 @@ data Lit
 
 int = Int
 
+getIntVal (Int v) = v
+
+litType (Int _) = INT
+
+data LitType
+  = INT
+  | CHAR
+    deriving (Eq, Ord, Show)
 data Type
   = Prim PrimType
   | ClassRef String

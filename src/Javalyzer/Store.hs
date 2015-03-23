@@ -1,5 +1,5 @@
 module Javalyzer.Store(
-  Store, emptyStore, addDefaultStoreValue, getNameValue, setNameValue, setLhsValue, isNull, createNewInstanceOfClass,
+  Store, emptyStore, addDefaultStoreValue, getNameValue, setNameValue, setLhsValue, isNull, createNewInstanceOfClass, createNewLiteral, getObjField,
   StoreValue) where
 
 import Data.List as L
@@ -79,8 +79,14 @@ setObjField:: FieldAccess -> StoreValue -> Store -> JError Store
 setObjField fa val store = do
   objRef <- getNameValue (objAccessedName fa) store
   oldObj <- indexValue (referencedIndex objRef) store
-  let newObj = replaceObjField (fieldAccessedName fa) val oldObj in
-    return $ setInd (referencedIndex objRef) newObj store
+  newObj <- setObjFieldValue (fieldAccessedName fa) val oldObj
+  return $ setInd (referencedIndex objRef) newObj store
+
+getObjField :: FieldAccess -> Store -> JError StoreValue
+getObjField fa s = do
+  objRef <- getNameValue (objAccessedName fa) s
+  ob <- indexValue (referencedIndex objRef) s
+  getObjFieldValue ob (fieldAccessedName fa)
 
 getField :: String -> String -> Store -> StoreValue
 getField objN fName s@(Store nameVals sValRefs _) =
@@ -93,11 +99,19 @@ getField objN fName s@(Store nameVals sValRefs _) =
 data StoreValue
   = ClassRef Int
   | Obj String (Map String StoreValue)
+  | PrimInt Integer
   | Null
     deriving (Eq, Ord, Show)
 
 classRef = ClassRef
 obj = Obj
+pInt = PrimInt
+
+createNewLiteral :: Lit -> StoreValue
+createNewLiteral l =
+  case litType l of
+    INT -> pInt $ getIntVal l
+    _ -> error $ (show l) ++ " is not supported by createNewLiteral"
 
 isNull :: String -> Store -> JError Bool
 isNull name s = do
@@ -115,5 +129,18 @@ defaultValue tp = case isRef tp of
   True -> Null
   False -> error $ "No support for primitive default values yet"
 
-replaceObjField :: String -> StoreValue -> StoreValue -> StoreValue
-replaceObjField fieldName newVal oldObj = error $ "not implemented"
+setObjFieldValue :: String -> StoreValue -> StoreValue -> JError StoreValue
+setObjFieldValue fieldName newVal (Obj n nameValMap) =
+  return $ Obj n (M.insert fieldName newVal nameValMap)
+setObjFieldValue _ _ other =
+  fail $ (show other) ++ " is not an object so setObjFieldValue cannot be called on it"
+  
+  
+
+getObjFieldValue :: StoreValue -> String -> JError StoreValue
+getObjFieldValue ob@(Obj _ nameValMap) fName =
+  case M.lookup fName nameValMap of
+    Just val -> return val
+    Nothing -> fail $ (show ob) ++ " has no field named " ++ fName
+getObjFieldValue other _ =
+  fail $ (show other) ++ " is not an object"

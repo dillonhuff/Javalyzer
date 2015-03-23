@@ -44,6 +44,10 @@ execAssign errTest h s l r is = do
 symbolicExecExp :: ClassHierarchy -> Store -> Exp -> JError (StoreValue, Store)
 symbolicExecExp c s exp =
   case expType exp of
-    FIELDACCESS -> error "symbolicExecExp is not implemented"
+    FIELDACCESS -> do
+      f <- getObjField (getFieldAccFromExp exp) s
+      return $ (f, s)
     NEWINST -> createNewInstanceOfClass (getClassNameFromExp exp) c s
-    _ -> error $ (show exp) ++ " is not yet supported by symbolicExecExp"
+    LITERAL -> let lit = createNewLiteral (getLiteralFromExp exp) in
+      return $ (lit, s)
+--    _ -> error $ (show exp) ++ " is not yet supported by symbolicExecExp"
