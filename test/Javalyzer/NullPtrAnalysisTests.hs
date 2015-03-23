@@ -11,7 +11,7 @@ import Javalyzer.Utils
 allNullPtrAnalysisTests =
   testFunction (checkClassForNullPtrs classH) nullPtrCases
 
-classH = newClassHierarchy
+classH = newClassHierarchy [objectClass, tinyClass, noNullDerefClass]
 
 nullPtrCases =
   L.map (\(x, y) -> (x, JSuccess y))
@@ -26,8 +26,8 @@ nullObjMethod =
         Nothing
         "nullMethod"
         []
-        [fieldDecl (cRef "Tiny") "t",
-         fieldDecl (cRef "Object") "p",
+        [fieldDeclInstr (cRef "Tiny") "t",
+         fieldDeclInstr (cRef "Object") "p",
          asg (vLhs "p") (fieldAccExp "t" "m")]
 
 noNullDerefClass = uClass "NoDeref" [field primInt "m"] [noNullMethod]
@@ -37,8 +37,8 @@ noNullMethod =
         Nothing
         "noNull"
         []
-        [fieldDecl primInt "t",
-         fieldDecl (cRef "NoDeref") "noD",
+        [fieldDeclInstr primInt "t",
+         fieldDeclInstr (cRef "NoDeref") "noD",
          asg (vLhs "noD") (newInst "NoDeref"),
          asg (fLhs "noD" "m") (intLit 12),
          asg (vLhs "t") (fieldAccExp "noD" "m")]

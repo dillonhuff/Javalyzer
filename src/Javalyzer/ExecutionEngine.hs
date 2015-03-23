@@ -30,7 +30,7 @@ symbolicExecInstrs errTest h s (i:is) = do
   case testRes of
     True -> JSuccess True
     False -> case instrType i of
-      FIELDDECL -> execFieldDecl errTest h s (fieldType i) (fieldName i) is
+      FIELDDECL -> execFieldDecl errTest h s (fieldType $ getFieldDeclFromInstr i) (fieldName $ getFieldDeclFromInstr i) is
       ASSIGN -> execAssign errTest h s (lhs i) (rhs i) is
 
 execFieldDecl errTest h s fieldType fieldName is =
@@ -44,6 +44,6 @@ execAssign errTest h s l r is = do
 symbolicExecExp :: ClassHierarchy -> Store -> Exp -> JError (StoreValue, Store)
 symbolicExecExp c s exp =
   case expType exp of
-    FIELDACCESS -> error "symbolicExecExp is not implemented"--getField (objAccessedName exp) (fieldAccessedName exp) s
-    NEWINST -> success $ createNewInstanceOfClass (getClassNameFromExp exp) c s
+    FIELDACCESS -> error "symbolicExecExp is not implemented"
+    NEWINST -> createNewInstanceOfClass (getClassNameFromExp exp) c s
     _ -> error $ (show exp) ++ " is not yet supported by symbolicExecExp"

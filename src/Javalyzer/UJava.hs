@@ -1,35 +1,53 @@
 module Javalyzer.UJava(
   Class, uClass, className, classMethods,
-  ClassHierarchy,
-  newClassHierarchy,
-  objectClass,
-  thisDecl,
-  Field, field, formalParamDecl,
-  Method, method, instructions, formalParams, fieldDecl,
-  Instruction, instrType, asg, fieldType, fieldName, lhs, rhs,
-  Lhs, vLhs, fLhs, lhsType, getFieldAccFromLhs,
+  ClassHierarchy, newClassHierarchy, getClassFields,
+  objectClass, thisDecl,
+  Field, field, formalParamDecl, fieldType, fieldName,
+  Method, method, instructions, formalParams,
+  Instruction, instrType, asg, lhs, rhs, getFieldDeclFromInstr, fieldDeclInstr,
+  Lhs, vLhs, fLhs, lhsType, getFieldAccFromLhs, getNameFromLhs,
   LhsType(..), 
-  Exp, expType, intLit, newInst, fieldAccExp, getFieldAccFromExp, getClassNameFromExp,
+  Exp, expType, intLit, newInst, fieldAccExp, getFieldAccFromExp, getClassNameFromExp, 
   ExpType(..),
   FieldAccess, objAccessedName, fieldAccessedName,
   InstrType(..),
-  Type, cRef, primInt, isRef,
-  Context) where
+  Type, cRef, primInt, isRef) where
 
-data ClassHierarchy = CL
+import Control.Monad
+import Data.List as L
+
+import Javalyzer.Utils
+
+data ClassHierarchy = CL [(String, Class)]
                       deriving (Eq, Ord, Show)
 
-newClassHierarchy = CL
+newClassHierarchy classes = CL $ L.zip (L.map className classes) classes
+
+getClassFields :: String -> ClassHierarchy -> JError [Field]
+getClassFields className h = do
+  c <- lookupClass className h
+  case superClassName c of
+    Just super -> liftM (\fList -> (classFields c) ++ fList) (getClassFields super h)
+    Nothing -> return $ classFields c
+
+lookupClass :: String -> ClassHierarchy -> JError Class
+lookupClass className h@(CL classes) =
+  case L.lookup className classes of
+    Just c -> success c
+    Nothing -> fail $ "Could not find class of name " ++ className ++ " in " ++ (show h)
 
 data Class
-  = Class String [Field] [Method]
+  = Class String (Maybe String) [Field] [Method]
     deriving (Eq, Ord, Show)
 
-className (Class n _ _) = n
+className (Class n _ _ _) = n
+classMethods (Class _ _ _ ms) = ms
+classFields (Class _ _ fs _) = fs
+superClassName (Class _ superN _ _) = superN
 
-classMethods (Class _ _ m) = m
+uClass name fs ms = Class name (Just "Object") fs ms
 
-uClass = Class
+objectClass = Class "Object" Nothing [] []
 
 thisDecl :: Class -> [Instruction]
 thisDecl c = []
@@ -39,6 +57,9 @@ data Field
     deriving (Eq, Ord, Show)
 
 field = Field
+
+fieldType (Field t _) = t
+fieldName (Field _ n) = n
 
 formalParamDecl :: Field -> [Instruction]
 formalParamDecl f = []
@@ -53,12 +74,14 @@ instructions (Method _ _ _ is) = is
 formalParams (Method _ _ fps _) = fps
 
 data Instruction
-  = FieldDecl Type String
+  = FD Field
   | Assign Lhs Exp
     deriving (Eq, Ord, Show)
 
-fieldDecl = FieldDecl
+fieldDeclInstr t n = FD  $ field t n
 asg = Assign
+
+getFieldDeclFromInstr (FD f) = f
 
 data InstrType
   = FIELDDECL
@@ -66,11 +89,8 @@ data InstrType
     deriving (Eq, Ord, Show)
 
 instrType :: Instruction -> InstrType
-instrType (FieldDecl _ _) = FIELDDECL
+instrType (FD _) = FIELDDECL
 instrType (Assign _ _) = ASSIGN
-
-fieldType (FieldDecl t _) = t
-fieldName (FieldDecl _ n) = n
 
 lhs (Assign l _) = l
 rhs (Assign _ r) = r
@@ -84,6 +104,7 @@ vLhs str = VarLhs str
 fLhs objName fieldName = FA $ fieldAccess objName fieldName
 
 getFieldAccFromLhs (FA acc) = acc
+getNameFromLhs (VarLhs n) = n
 
 lhsType (VarLhs _) = LVAR
 lhsType (FA _) = LFIELDACCESS
@@ -150,8 +171,4 @@ data PrimType
     deriving (Eq, Ord, Show)
 
 intT = IntT
-objectClass = uClass "Object" [] []
 
-data Context
-  = C
-    deriving (Eq, Ord, Show)

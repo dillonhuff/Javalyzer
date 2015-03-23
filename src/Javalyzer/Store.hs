@@ -2,6 +2,7 @@ module Javalyzer.Store(
   Store, emptyStore, addDefaultStoreValue, getNameValue, setNameValue, setLhsValue, isNull, createNewInstanceOfClass,
   StoreValue) where
 
+import Data.List as L
 import Data.Map as M
 
 import Javalyzer.UJava
@@ -32,14 +33,31 @@ setNameValue name val s = do
   ind <- getInd name s
   return $ setInd ind val s
 
-createNewInstanceOfClass :: String -> ClassHierarchy -> Store -> (StoreValue, Store)
-createNewInstanceOfClass className h s = error "createNewInstance is not yet implemented"
+createNewInstanceOfClass :: String -> ClassHierarchy -> Store -> JError (StoreValue, Store)
+createNewInstanceOfClass className h s = do
+  classFields <- getClassFields className h
+  let newObj = createNewObj className classFields
+      (objInd, newStore) = addValue newObj s in
+    do
+      return $ (classRef objInd, newStore)
+
+addValue :: StoreValue -> Store -> (Int, Store)
+addValue val (Store namesToInds indsToVals c) =
+  (c, Store namesToInds (M.insert c val indsToVals) (c+1))
+
+createNewObj :: String -> [Field] -> StoreValue
+createNewObj className fields =
+  let defaultVals = L.map (defaultValue . fieldType) fields
+      fieldNames = L.map fieldName fields
+      fieldMap = M.fromList $ L.zip fieldNames defaultVals in
+  obj className fieldMap
 
 setLhsValue :: Lhs -> StoreValue -> Store -> JError Store
 setLhsValue l v s =
   case lhsType l of
     LFIELDACCESS -> setObjField (getFieldAccFromLhs l) v s
-    _ -> error $ (show l) ++ " " ++ (show v) ++ "setValue not implemented"
+    LVAR -> setNameValue (getNameFromLhs l) v s
+--    _ -> error $ (show l) ++ " " ++ (show v) ++ " setValue not implemented"
 
 getInd :: String -> Store -> JError Int
 getInd name s@(Store nameInds _ _) =
@@ -77,6 +95,9 @@ data StoreValue
   | Obj String (Map String StoreValue)
   | Null
     deriving (Eq, Ord, Show)
+
+classRef = ClassRef
+obj = Obj
 
 isNull :: String -> Store -> JError Bool
 isNull name s = do
