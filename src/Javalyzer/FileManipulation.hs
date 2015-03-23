@@ -20,7 +20,6 @@ cppExtensions = [".cpp", ".h", ".hpp"]
 
 applyToFileContents :: (String -> a) -> (a -> FilePath -> String) -> FilePath -> IO a
 applyToFileContents f log path = do
-  putStrLn $ "Processing " ++ path ++ "\n"
   fileH <- SIO.openFile path ReadMode
   fileContents <- StrictIO.hGetContents fileH
   let res = f fileContents in

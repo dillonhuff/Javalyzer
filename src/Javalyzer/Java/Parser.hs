@@ -1,11 +1,11 @@
-module Javalyzer.Parser(parseCompilationUnit) where
+module Javalyzer.Java.Parser(parseCompilationUnit) where
 
 import Data.List as L
 import Language.Java.Parser
 import Language.Java.Syntax
 import Text.Parsec.Error
 
-import Javalyzer.Syntax
+import Javalyzer.Java.Syntax
 import Javalyzer.Utils
 
 parseCompilationUnit :: String -> JError JCompilationUnit

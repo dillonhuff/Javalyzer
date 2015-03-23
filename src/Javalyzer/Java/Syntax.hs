@@ -1,4 +1,4 @@
-module Javalyzer.Syntax(JParseError,
+module Javalyzer.Java.Syntax(JParseError,
                         JCompilationUnit,
                         jCompUnit,
                         package,
@@ -117,7 +117,7 @@ import Control.Monad
 import Data.List as L
 import Data.Set as S
 
-import Javalyzer.Desugared
+import Javalyzer.Java.Desugared
 import Javalyzer.Utils
 
 data JParseError = JParseError String

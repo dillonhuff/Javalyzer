@@ -1,11 +1,11 @@
-module Javalyzer.NullPtrAnalysis(checkClassForNullPtrs) where
+module Javalyzer.Analysis.NullPtrAnalysis(checkClassForNullPtrs) where
 
 import Control.Monad
 import Data.List as L
 
-import Javalyzer.ExecutionEngine
-import Javalyzer.Store
-import Javalyzer.UJava
+import Javalyzer.Analysis.ExecutionEngine
+import Javalyzer.Analysis.Store
+import Javalyzer.Analysis.UJava
 import Javalyzer.Utils
 
 checkClassForNullPtrs :: ClassHierarchy -> Class -> JError Bool

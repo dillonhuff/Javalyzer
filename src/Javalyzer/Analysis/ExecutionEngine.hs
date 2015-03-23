@@ -1,10 +1,10 @@
-module Javalyzer.ExecutionEngine(
+module Javalyzer.Analysis.ExecutionEngine(
   symbolicMethodExec) where
 
 import Data.List as L
 
-import Javalyzer.Store
-import Javalyzer.UJava
+import Javalyzer.Analysis.Store
+import Javalyzer.Analysis.UJava
 import Javalyzer.Utils
 
 symbolicMethodExec :: (Store -> Instruction -> JError Bool) ->

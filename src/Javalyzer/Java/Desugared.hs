@@ -1,4 +1,4 @@
-module Javalyzer.Desugared(
+module Javalyzer.Java.Desugared(
   DCompilationUnit, dCompilationUnit,
   DPackage, dPackage,
   DImportDecl, dImportDecl,

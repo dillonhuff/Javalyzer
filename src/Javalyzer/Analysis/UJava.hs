@@ -1,4 +1,4 @@
-module Javalyzer.UJava(
+module Javalyzer.Analysis.UJava(
   Class, uClass, className, classMethods,
   ClassHierarchy, newClassHierarchy, getClassFields,
   objectClass, thisDecl,

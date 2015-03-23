@@ -1,4 +1,4 @@
-module Javalyzer.SyntaxConvenience(sJName,
+module Javalyzer.Java.SyntaxConvenience(sJName,
                                    mJName,
                                    sRefT,
                                    sVarD,
@@ -9,7 +9,7 @@ module Javalyzer.SyntaxConvenience(sJName,
 
 import Data.List as L
 
-import Javalyzer.Syntax
+import Javalyzer.Java.Syntax
 
 sJName str = jName [jIdent str]
 mJName strs = jName $ L.map jIdent strs

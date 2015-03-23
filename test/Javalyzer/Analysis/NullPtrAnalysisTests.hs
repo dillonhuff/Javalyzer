@@ -1,10 +1,10 @@
-module Javalyzer.NullPtrAnalysisTests(
+module Javalyzer.Analysis.NullPtrAnalysisTests(
   allNullPtrAnalysisTests) where
 
 import Data.List as L
 
-import Javalyzer.NullPtrAnalysis
-import Javalyzer.UJava
+import Javalyzer.Analysis.NullPtrAnalysis
+import Javalyzer.Analysis.UJava
 import Javalyzer.TestUtils
 import Javalyzer.Utils
 

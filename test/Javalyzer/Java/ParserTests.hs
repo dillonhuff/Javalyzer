@@ -1,8 +1,8 @@
-module Javalyzer.ParserTests(allParserTests) where
+module Javalyzer.Java.ParserTests(allParserTests) where
 
-import Javalyzer.Parser
-import Javalyzer.Syntax
-import Javalyzer.SyntaxConvenience
+import Javalyzer.Java.Parser
+import Javalyzer.Java.Syntax
+import Javalyzer.Java.SyntaxConvenience
 import Javalyzer.TestUtils
 import Javalyzer.Utils
 

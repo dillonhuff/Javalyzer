@@ -1,12 +1,12 @@
-module Javalyzer.SyntaxTests(allSyntaxTests) where
+module Javalyzer.Java.SyntaxTests(allSyntaxTests) where
 
 import Control.Monad
 import Data.List as L
 import Data.Set as S
 
-import Javalyzer.Desugared
-import Javalyzer.Parser
-import Javalyzer.Syntax
+import Javalyzer.Java.Desugared
+import Javalyzer.Java.Parser
+import Javalyzer.Java.Syntax
 import Javalyzer.TestUtils
 import Javalyzer.Utils
 
@@ -79,8 +79,7 @@ desugarFirstStmtCases =
   [("Return", dReturn Nothing),
    ("ReturnChar", dReturn $ Just $ dLit $ dChar 'a'),
    ("PrimaryFieldAccess", dReturn $ Just $ dPrimaryFieldAccess dThis (dVarIdent "m")),
-   ("ExpName", dReturn $ Just $ dExpName $ dName [dVarIdent "nope"]),
-   ("AssignExp", dExpSt $ dAssign (]
+   ("ExpName", dReturn $ Just $ dExpName $ dName [dVarIdent "nope"])]
 
 oneFieldClass =
   dClassDecl "FieldClass" [] Nothing [dVarDecl noMods (dPrimType $ dIntT) (dVarIdent "i")] [] []
