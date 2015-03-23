@@ -18,7 +18,7 @@ classH = newClassHierarchy [objectClass,
                             nullAssignClass]
 
 nullPtrCases =
-  L.map (\(x, y) -> (x, JSuccess y))
+  L.map (\(x, y) -> (x, return y))
   [(objectClass, False),
    (tinyClass, True),
    (noNullDerefClass, False),

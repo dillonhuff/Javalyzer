@@ -35,7 +35,7 @@ typeParamCases =
 desugarStr str = (parseCompilationUnit str) >>= dsCompilationUnit
 
 desugarCompUnitCases =
-  L.map (\(x, y) -> (x ++ ".java", JSuccess y))
+  L.map (\(x, y) -> (x ++ ".java", return y))
   [("Empty", dCompilationUnit Nothing [] [] []),
    ("EmptyClass",
     dCompilationUnit Nothing [] [] [dClassDecl "Empty" [] Nothing [] [] []]),
@@ -53,7 +53,7 @@ desugarCompUnitCases =
 
 
 blockStmtCases =
-  L.map (\(x, y) -> (x, JSuccess y))
+  L.map (\(x, y) -> (x, return y))
   [(jLocalVars
     []
     (jRefType $ jClassRefType $ jClassType [(jIdent "Object", [])])
@@ -75,7 +75,7 @@ blockStmtCases =
      (dVarIdent "l")])]
 
 desugarFirstStmtCases =
-  L.map (\(x, y) -> (x ++ ".java", JSuccess y))
+  L.map (\(x, y) -> (x ++ ".java", return y))
   [("Return", dReturn Nothing),
    ("ReturnChar", dReturn $ Just $ dLit $ dChar 'a'),
    ("PrimaryFieldAccess", dReturn $ Just $ dPrimaryFieldAccess dThis (dVarIdent "m")),
@@ -91,6 +91,6 @@ oneConstructorClass =
   dClassDecl "ConstructorClass" [] Nothing [] [] [dConstructor (mods private realExtendable nonStatic) [] "ConstructorClass" [dVarDecl noMods (dRefType $ dClassRefType $ dClassType [(dClassName "Object", [])]) (dVarIdent "obj")] [] (dConstructorBody Nothing [])]
 
 modsCases =
-  L.map (\(x, y) -> (x, JSuccess y))
+  L.map (\(x, y) -> (x, return y))
   [([], noMods),
    ([jPrivate], mods private realExtendable nonStatic)]

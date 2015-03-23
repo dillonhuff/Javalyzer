@@ -24,9 +24,9 @@ maybePackageDeclToJ :: Maybe PackageDecl -> JError (Maybe JPackageDecl)
 maybePackageDeclToJ Nothing = return Nothing
 maybePackageDeclToJ (Just dec) =
   let pkg = packageDeclToJ dec in
-  case pkg of
-    (JSuccess p) -> JSuccess (Just p)
-    (JFail str) -> (JFail str)
+  case isFail pkg of
+    True -> fail $ (show pkg)
+    False -> return $ Just $ getSuccess pkg
 
   
 packageDeclToJ :: PackageDecl -> JError JPackageDecl

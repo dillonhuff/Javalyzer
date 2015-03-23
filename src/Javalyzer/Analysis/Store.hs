@@ -62,7 +62,7 @@ setLhsValue l v s =
 getInd :: String -> Store -> JError Int
 getInd name s@(Store nameInds _ _) =
   case M.lookup name nameInds of
-    Just ind -> JSuccess ind
+    Just ind -> return ind
     Nothing -> fail $ name ++ " is not defined in store " ++ show s
 
 setInd :: Int -> StoreValue -> Store -> Store
@@ -72,7 +72,7 @@ setInd ind val (Store nameInds indsToVals c) =
 indexValue :: Int -> Store -> JError StoreValue
 indexValue index s@(Store _ indsToVals _) =
   case M.lookup index indsToVals of
-    Just v -> JSuccess v
+    Just v -> return v
     Nothing -> fail $ (show index) ++ " is not defined in store " ++ show s
 
 setObjField:: FieldAccess -> StoreValue -> Store -> JError Store

@@ -21,7 +21,7 @@ nullPtrException :: Store -> Instruction -> JError Bool
 nullPtrException store i =
   case instrType i of
     ASSIGN -> isNullDereference (rhs i) store
-    _ -> JSuccess False
+    _ -> return False
 
 isNullDereference :: Exp -> Store -> JError Bool
 isNullDereference exp s =

@@ -24,11 +24,11 @@ symbolicExecInstrs :: (Store -> Instruction -> JError Bool) ->
                       Store ->
                       [Instruction] ->
                       JError Bool
-symbolicExecInstrs errTest h s [] = JSuccess False
+symbolicExecInstrs errTest h s [] = return False
 symbolicExecInstrs errTest h s (i:is) = do
   testRes <- errTest s i
   case testRes of
-    True -> JSuccess True
+    True -> return True
     False -> case instrType i of
       FIELDDECL -> execFieldDecl errTest h s (fieldType $ getFieldDeclFromInstr i) (fieldName $ getFieldDeclFromInstr i) is
       ASSIGN -> execAssign errTest h s (lhs i) (rhs i) is
