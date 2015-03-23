@@ -7,7 +7,7 @@ module Javalyzer.UJava(
   Instruction, instrType, asg, lhs, rhs, getFieldDeclFromInstr, fieldDeclInstr,
   Lhs, vLhs, fLhs, lhsType, getFieldAccFromLhs, getNameFromLhs,
   LhsType(..), 
-  Exp, expType, intLit, newInst, fieldAccExp, getFieldAccFromExp, getClassNameFromExp, getLiteralFromExp,
+  Exp, expType, intLit, newInst, fieldAccExp, getFieldAccFromExp, getClassNameFromExp, getLiteralFromExp, vRhs, getVarFromExp,
   ExpType(..),
   FieldAccess, objAccessedName, fieldAccessedName,
   InstrType(..),
@@ -119,14 +119,17 @@ data LhsType
 data Exp
   = EFieldAcc FieldAccess
   | Literal Lit
+  | VRhs String
   | NewInst String
     deriving (Eq, Ord, Show)
 
 fieldAccExp objName fieldName = EFieldAcc $ fieldAccess objName fieldName
+vRhs = VRhs
 lit = Literal
 intLit = lit . int
 newInst = NewInst
 
+getVarFromExp (VRhs n) = n
 getLiteralFromExp (Literal l) = l
 getFieldAccFromExp (EFieldAcc acc) = acc
 getClassNameFromExp (NewInst n) = n
@@ -135,11 +138,13 @@ data ExpType
   = FIELDACCESS
   | LITERAL
   | NEWINST
+  | VRHS
     deriving (Eq, Ord, Show)
 
 expType (EFieldAcc _) = FIELDACCESS
 expType (Literal _) = LITERAL
 expType (NewInst _) = NEWINST
+expType (VRhs _) = VRHS
 
 data FieldAccess
   = FieldAccess String String
@@ -182,4 +187,3 @@ data PrimType
     deriving (Eq, Ord, Show)
 
 intT = IntT
-

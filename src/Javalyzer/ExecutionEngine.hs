@@ -50,4 +50,7 @@ symbolicExecExp c s exp =
     NEWINST -> createNewInstanceOfClass (getClassNameFromExp exp) c s
     LITERAL -> let lit = createNewLiteral (getLiteralFromExp exp) in
       return $ (lit, s)
+    VRHS -> do
+      val <- getNameValue (getVarFromExp exp) s
+      return (val, s)
 --    _ -> error $ (show exp) ++ " is not yet supported by symbolicExecExp"

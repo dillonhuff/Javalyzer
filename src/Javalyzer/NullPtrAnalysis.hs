@@ -27,5 +27,6 @@ isNullDereference :: Exp -> Store -> JError Bool
 isNullDereference exp s =
   case expType exp of
     FIELDACCESS -> isNull (objAccessedName $ getFieldAccFromExp exp) s
-    NEWINST -> success False
-    LITERAL -> success False
+    NEWINST -> return False
+    LITERAL -> return False
+    VRHS -> return False
