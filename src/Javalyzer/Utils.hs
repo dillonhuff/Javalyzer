@@ -24,19 +24,19 @@ instance (Show a) => (Show (JError a)) where
   show (JSuccess res) = "Success: " ++ show res
 
 instance Monad JError where
-  (>>=) (JFail str) _ = JFail str
+  (>>=) (JFail err) _ = JFail err
   (>>=) (JSuccess res) f = f res
   return a = JSuccess a
   fail str = defaultErr str
 
 instance Applicative JError where
   pure a = JSuccess a
-  (<*>) (JFail str) _ = JFail str
-  (<*>) _ (JFail str) = JFail str
+  (<*>) (JFail err) _ = JFail err
+  (<*>) _ (JFail err) = JFail err
   (<*>) (JSuccess f) (JSuccess a) = JSuccess (f a)
   
 instance Functor JError where
-  fmap f (JFail str) = JFail str
+  fmap f (JFail err) = JFail err
   fmap f (JSuccess a) = JSuccess (f a)
 
 data ErrorMsg
