@@ -57,7 +57,6 @@ setLhsValue l v s =
   case lhsType l of
     LFIELDACCESS -> setObjField (getFieldAccFromLhs l) v s
     LVAR -> setNameValue (getNameFromLhs l) v s
---    _ -> error $ (show l) ++ " " ++ (show v) ++ " setValue not implemented"
 
 getInd :: String -> Store -> JError Int
 getInd name s@(Store nameInds _ _) =
@@ -87,14 +86,6 @@ getObjField fa s = do
   objRef <- getNameValue (objAccessedName fa) s
   ob <- indexValue (referencedIndex objRef) s
   getObjFieldValue ob (fieldAccessedName fa)
-
-getField :: String -> String -> Store -> StoreValue
-getField objN fName s@(Store nameVals sValRefs _) =
-  case M.lookup objN nameVals of
-    Just ind -> case M.lookup ind sValRefs of
-      Just val -> val
-      Nothing -> error $ objN ++ "." ++ fName ++ " does not exist in store " ++ show s
-    Nothing -> error $ objN ++ " does not exist in store " ++ show s
 
 data StoreValue
   = ClassRef Int
@@ -135,8 +126,6 @@ setObjFieldValue fieldName newVal (Obj n nameValMap) =
   return $ Obj n (M.insert fieldName newVal nameValMap)
 setObjFieldValue _ _ other =
   fail $ (show other) ++ " is not an object so setObjFieldValue cannot be called on it"
-  
-  
 
 getObjFieldValue :: StoreValue -> String -> JError StoreValue
 getObjFieldValue ob@(Obj _ nameValMap) fName =
