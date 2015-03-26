@@ -25,7 +25,12 @@ module Javalyzer.Java.Desugared(
   Access, public, private, protected,
   ImplLevel, abstract, final, realExtendable,
   nonStatic, static,
-  firstBlock) where
+  firstBlock,
+  PackageNames, buildPackages, package) where
+
+import Data.List as L
+
+import Javalyzer.Utils
 
 data DCompilationUnit
   = DCompilationUnit (Maybe DPackage) [DImportDecl] [DInterfaceDecl] [DClassDecl]
@@ -36,11 +41,16 @@ dCompilationUnit = DCompilationUnit
 firstBlock (DCompilationUnit _ _ _ classes) =
   methodBody $ firstMethod $ head classes
 
+extractNames :: DCompilationUnit -> ([String], [String])
+extractNames (DCompilationUnit (Just pkg) _ _ classes) =
+  (dPackageName pkg, L.map name classes)
+
 data DPackage
   = DPackage [String]
     deriving (Eq, Ord, Show)
 
 dPackage = DPackage
+dPackageName (DPackage n) = n
 
 data DImportDecl = DImportDecl Bool Bool [String]
                    deriving (Eq, Ord, Show)
@@ -188,12 +198,13 @@ data DClassType
 dClassType = DClassType
 
 data DTypeId
-  = DClassName String
+  = DClassName (Maybe DPackage) String
   | DTypeVar String
     deriving (Eq, Ord, Show)
 
 dTypeVar = DTypeVar
-dClassName = DClassName
+dClassName str = DClassName Nothing str
+dClassNameWithPackage pkg str = DClassName (Just $ dPackage pkg) str
 
 data DTypeArg
   = DActualType DRefType
@@ -237,3 +248,23 @@ final = Final
 realExtendable = RealExtendable
 
 type DException = DRefType
+
+data PackageNames = PackageNames {
+  packageName :: DPackage,
+  classNames :: [DTypeId]
+  } deriving (Eq, Ord, Show)
+
+package :: [String] -> [String] -> JError PackageNames
+package pkgName classes =
+  let pkg = dPackage pkgName
+      classesWithPackageNames = L.map (dClassNameWithPackage pkgName) classes in
+  return $ PackageNames (dPackage pkgName) classesWithPackageNames
+
+buildPackages :: [DCompilationUnit] -> JError [PackageNames]
+buildPackages compUnits =
+  let pkgClassNamesTuples = L.map extractNames compUnits
+      pkgNameAllClasses = groupByFst pkgClassNamesTuples in
+  mapM (\(pkgName, classNames) -> package pkgName (L.concat classNames)) pkgNameAllClasses
+
+groupByFst :: Eq a => [(a, b)] -> [(a, [b])]
+groupByFst [] = []
